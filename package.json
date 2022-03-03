@@ -1,0 +1,16 @@
+{
+  "name": "chainweb-sse",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Will Martino <1953196+buckie@users.noreply.github.com>",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.19.2",
+    "chainweb": "^2.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.17.3",
+    "lodash": "^4.17.21",
+    "node-fetch": "^3.2.1",
+    "pact-lang-api": "^4.3.3"
+  }
+}
