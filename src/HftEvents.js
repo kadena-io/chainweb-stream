@@ -7,16 +7,12 @@ const eventHost = "testnetqueries.kadena.network";
 const getCWDataEvents = async (name, offset, limit=50) => {
   console.debug('fetching marm events', {limit, offset})
 //  const raw = fetch(`https://${eventHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`);
-  const raw = fetch(`http://${globalConfig.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`);
-  const rawRes = await raw;
-  const res = await rawRes;
-  if (res.ok){
-     const resJSON = await rawRes.json();
-     return resJSON;
-   } else {
-     const resTEXT = await rawRes.text();
-     return resTEXT;
-   }
+  try {
+    const response = await fetch(`http://${globalConfig.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`);
+    return await response.json();
+  } catch(err) {
+    return await err.text();
+  }
 };
 
 const sortEvents = (ev1, ev2, newestToOldest=false) => {
@@ -40,7 +36,9 @@ export const syncEventsFromCWData = async (name, limit=50, threads=4, newestToOl
     continueSync = _.every(_.map(completedResults, (v) => v.length >= limit));
   };
   // console.debug(`${name} raw events`, _.flatten(completedResults));
-  completedResults = _.filter(_.flatten(completedResults), ({moduleHash}) => {return !moduleHashBlacklist.includes(moduleHash);});
+  completedResults = _.filter(_.flatten(completedResults), ({moduleHash}) => {
+    return !moduleHashBlacklist.includes(moduleHash);}
+  );
   completedResults.sort((a,b)=>sortEvents(a,b,newestToOldest));
   console.debug(`${name}'s events`, stateObj);
   return stateObj;

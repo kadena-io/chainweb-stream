@@ -1,12 +1,9 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-
-const _ = require('lodash');
-//config file for blockchain calls
-const { hftAPI, fqpAPI, fqrpAPI, globalConfig, chainId } = require("../kadena-config.js");
+import fetch from "node-fetch";
+import cors from 'cors';
+import bodyParser from "body-parser";
+import express from 'express'
+import _ from 'lodash';
+import { hftAPI, fqpAPI, fqrpAPI, globalConfig, chainId } from '../kadena-config.js';
 
 // Server Code
 const app = express();
