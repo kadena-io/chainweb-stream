@@ -1,0 +1,3 @@
+# Ignore artifacts:
+data
+node_modules
