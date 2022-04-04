@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Test</title>
+</head>
+<body>
+  <main id="main">
+
+  </main>
+
+<script>
+  const es = new EventSource('http://localhost:3000/stream');
+
+
+  es.addEventListener('update', function (event) {
+    document.querySelector('#main').innerHTML = event.data;
+    console.log(event.data)
+  });
+</script>
+</body>
+</html>

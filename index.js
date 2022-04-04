@@ -10,8 +10,7 @@ import { router } from './src/routes/sse.routes.js'
 const { port, origin } = config
 const app = express()
 
-// config express app
-app.use(cors({ origin, credentials: true }))
+app.use(cors())
 app.use(helmet())
 app.use(compression())
 app.use(express.json())
