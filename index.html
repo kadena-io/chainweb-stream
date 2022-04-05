@@ -5,9 +5,12 @@
   <title>Test</title>
 </head>
 <body>
-  <main id="main">
+  <section id="main">
 
-  </main>
+  </section>
+  <section id="kdaevents">
+
+  </section>
 
 <script>
   const es = new EventSource('http://localhost:3000/stream');
@@ -17,6 +20,14 @@
     document.querySelector('#main').innerHTML = event.data;
     console.log(event.data)
   });
+
+
+  es.addEventListener('k:update', function (event) {
+    document.querySelector('#kdaevents').innerHTML = event.data;
+    console.log(event.data)
+  });
+
+
 </script>
 </body>
 </html>
