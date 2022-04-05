@@ -1,38 +1,19 @@
 import SSE from 'express-sse'
 import _ from 'lodash'
 import fetch from 'node-fetch'
-import { globalConfig } from '../../kadena-config.js'
+import { config } from '../../config/index.js'
 
-export const sse = new SSE(['test data'])
+export const sse = new SSE([]) // get latest data from db if needed
 
-let clients = []
-let kdaEvents = []
-let count = 0
+export let kdaEvents = []
 
-setInterval(() => sse.send({ counter: count++ }, 'update'), 5000)
-
-function sendEventsToAll(newFact) {
-  clients.forEach((client) => client.response.write(`data: ${JSON.stringify(newFact)}\n\n`))
-}
-
-async function addEvent(newEvent) {
-  kdaEvents.push(newEvent)
-  console.log('new event: ', newEvent)
-  return sendEventsToAll(newEvent)
-}
-
-// Events Code
-const eventHost = 'testnetqueries.kadena.network'
-
-const getCWDataEvents = async (name, offset, limit = 50) => {
-  console.log('fetching marm events', { limit, offset })
-  //  const raw = fetch(`https://${eventHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`);
-  const raw = fetch(
-    `http://${globalConfig.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`,
+const getChainWeaverDataEvents = async (name, offset, limit = 50) => {
+  const rawRes = await fetch(
+    `http://${config.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`,
   )
-  const rawRes = await raw
-  const res = await rawRes
-  if (res.ok) {
+  const response = await rawRes
+
+  if (response.ok) {
     const resJSON = await rawRes.json()
     return resJSON
   } else {
@@ -45,72 +26,71 @@ const sortEvents = (ev1, ev2, newestToOldest = false) => {
   return newestToOldest ? ev2.height - ev1.height : ev1.height - ev2.height
 }
 
-const syncEventsFromCWData = async (
+const syncEventsFromChainWeaverData = async (
   name,
   limit = 50,
   threads = 4,
   newestToOldest = false,
   moduleHashBlacklist = [],
 ) => {
-  console.log(`starting to get ${name} events`)
   var offset = 0
   var promisedResults = []
   var completedResults = []
   var continueSync = true
   while (continueSync) {
     console.log(`${name} events, doing batch`, { offset, limit, threads })
+
     for (var i = 0; i < threads; i++) {
-      promisedResults.push(getCWDataEvents(name, offset, limit))
+      promisedResults.push(getChainWeaverDataEvents(name, offset, limit))
       offset = offset + limit
     }
+
     completedResults = await Promise.all(promisedResults)
     // once a batch comes back empty, we're caught up
     continueSync = _.every(_.map(completedResults, (v) => v.length >= limit))
   }
-  // console.log(`${name} raw events`, _.flatten(completedResults));
   completedResults = _.filter(_.flatten(completedResults), ({ moduleHash }) => {
     return !moduleHashBlacklist.includes(moduleHash)
   })
   completedResults.sort((a, b) => sortEvents(a, b, newestToOldest))
-  // console.log(`${name}'s events`, completedResults);
   return completedResults
 }
 
 const getKdaEvents = async (prevKdaEvents) => {
-  const moduleHashBlacklist = [
-    'LKQj2snGFz7Y8iyYlSm3uIomEAYb0C9zXCkTIPtzkPU',
-    'F7tD1QlT8dx8BGyyq-h22OECYS7C3FfcYaRyxt6D1YQ',
-    'WSIFGtnAlLCHFcFEHaKGrGeAG4qnTsZRj9BdvzzGa6w',
-    '4m9KUKUzbd9hVZoN9uIlJkxYaf1NTz9G7Pc9C9rKTo4',
-    '_1rbpI8gnHqflwb-XqHsYEFBCrLNncLplikh9XFG-y8',
-    'dhIGiZIWED2Rk6zIrJxG8DeQn8n7WDKg2b5cZD2w4CU',
-    'cOJgr8s3j3p5Vk0AAqjdf1TzvWZlFsAiq4pMiOzUo1w',
-    'HsePyFCyYUPEPJqG5VymbQkkI3gsPAQn218uWEF_dbs',
-    'lWqEvH5U20apKfBn27HOBaW46vQlxhkiDtYHZ5KoYp0',
-    'uvtUnp96w2KnxnneYa4kUN1kTvYSa8Ma33UDkQXV0NA',
-    '78ngDzxXE8ZyHE-kFm2h7-6Xm8N8uwU_xd1fasO8gWU',
-  ]
-  // Some hacky "streaming" until the streaming api is back in
   // TODO: hacky orphan detection
   const forkDepth = 100
   const newEventHeight = prevKdaEvents.length ? prevKdaEvents[0]['blockHeight'] - forkDepth : 0
+
+  console.log({ newEventHeight, prevKdaEvents })
+
   const oldKdaEvents = _.dropWhile(prevKdaEvents, ({ height }) => height > newEventHeight)
-  const marmEvents = await syncEventsFromCWData('marmalade.', 100, 4, true, moduleHashBlacklist)
-  const newKdaEvents = _.takeWhile(marmEvents, ({ height }) => height >= newEventHeight)
+
+  const marmaladeEvents = await syncEventsFromChainWeaverData(
+    'marmalade.',
+    100,
+    4,
+    true,
+    config.moduleHashBlacklist,
+  )
+
+  const newKdaEvents = _.takeWhile(marmaladeEvents, ({ height }) => height >= newEventHeight)
+
   const mergedEvents = [...newKdaEvents, ...oldKdaEvents]
-  console.log('getKdaEvents', { mergedEvents, newKdaEvents, oldKdaEvents })
+
   return { mergedEvents, newKdaEvents }
 }
 
-const jankyStreaming = async (prevKdaEvents) => {
-  // this is just a hack until we get the steaming API online for events
-  while (true) {
-    const { newKdaEvents, mergedEvents } = await getKdaEvents(prevKdaEvents)
-    newKdaEvents.map((v) => addEvent(v))
+const updateClient = async (prevKdaEvents) => {
+  const { newKdaEvents } = await getKdaEvents(prevKdaEvents)
+  kdaEvents.push(...newKdaEvents)
+  sse.send(kdaEvents, 'k:update')
+}
 
-    sse.send(newKdaEvents, 'k:update')
+const startStreamingUpdates = async (prevKdaEvents) => {
+  while (true) {
+    await updateClient(prevKdaEvents)
     await new Promise((r) => setTimeout(r, 60000))
   }
 }
 
-jankyStreaming(kdaEvents)
+startStreamingUpdates(kdaEvents)

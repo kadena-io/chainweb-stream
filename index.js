@@ -7,7 +7,7 @@ import compression from 'compression'
 import { config } from './config/index.js'
 import { router } from './src/routes/sse.routes.js'
 
-const { port, origin } = config
+const { port } = config
 const app = express()
 
 app.use(cors())
