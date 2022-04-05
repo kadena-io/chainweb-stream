@@ -23,8 +23,14 @@
 
 
   es.addEventListener('k:update', function (event) {
-    document.querySelector('#kdaevents').innerHTML = event.data;
-    console.log(event.data)
+    const kdaSection = document.querySelector('#kdaevents')
+
+    console.log('event', typeof event.data)
+    JSON.parse(event.data).forEach((data) => {
+      const div = document.createElement('div');
+      div.innerHTML = JSON.stringify(data)
+      kdaSection.appendChild(div)
+    })
   });
 
 
