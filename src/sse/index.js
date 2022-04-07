@@ -2,10 +2,14 @@ import SSE from 'express-sse'
 import _ from 'lodash'
 import fetch from 'node-fetch'
 import { config } from '../../config/index.js'
-
-export const sse = new SSE([]) // get latest data from db if needed
+// get latest data from db if needed
 
 export let kdaEvents = []
+export let orphansEvents = []
+let initialEventsPoolCreated = false
+let prevEventHeight = 0
+
+export const sse = new SSE({ kdaEvents, orphansEvents }, { initialEvent: 'k:init' })
 
 const getChainWeaverDataEvents = async (name, offset, limit = 50) => {
   const rawRes = await fetch(
@@ -38,8 +42,6 @@ const syncEventsFromChainWeaverData = async (
   var completedResults = []
   var continueSync = true
   while (continueSync) {
-    console.log(`${name} events, doing batch`, { offset, limit, threads })
-
     for (var i = 0; i < threads; i++) {
       promisedResults.push(getChainWeaverDataEvents(name, offset, limit))
       offset = offset + limit
@@ -58,12 +60,16 @@ const syncEventsFromChainWeaverData = async (
 
 const getKdaEvents = async (prevKdaEvents) => {
   // TODO: hacky orphan detection
-  const forkDepth = 100
-  const newEventHeight = prevKdaEvents.length ? prevKdaEvents[0]['blockHeight'] - forkDepth : 0
 
-  console.log({ newEventHeight, prevKdaEvents })
+  // same requestkey hash of transaction
+  // different blockhashes
+  // print out duplicates
+  // get main api
 
-  const oldKdaEvents = _.dropWhile(prevKdaEvents, ({ height }) => height > newEventHeight)
+  // only update the new events req & blockhash
+  prevEventHeight = prevKdaEvents.length ? prevKdaEvents[0].height : 0
+
+  console.log({ prevEventHeight, prevKdaEvents })
 
   const marmaladeEvents = await syncEventsFromChainWeaverData(
     'marmalade.',
@@ -73,22 +79,58 @@ const getKdaEvents = async (prevKdaEvents) => {
     config.moduleHashBlacklist,
   )
 
-  const newKdaEvents = _.takeWhile(marmaladeEvents, ({ height }) => height >= newEventHeight)
+  const orphanList = []
+  const newKdaEvents = []
+  const oldKdaEvents = []
 
-  const mergedEvents = [...newKdaEvents, ...oldKdaEvents]
+  marmaladeEvents.forEach((event) => {
+    if (event.height > prevEventHeight) {
+      newKdaEvents.push(event)
+      prevEventHeight = event.height
+    } else if (event.height <= prevEventHeight) {
+      oldKdaEvents.push(event)
+    }
+  })
 
-  return { mergedEvents, newKdaEvents }
+  newKdaEvents.forEach((event) => {
+    newKdaEvents.forEach((event2) => {
+      if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
+        orphanList.push({ event, event2 })
+        console.log('____________orphanList_____________', { event, event2 })
+      }
+    })
+  })
+
+  console.log({ prevEventHeight })
+  console.log({ orphanList })
+  console.log({ newKdaEvents })
+  console.log({ oldKdaEvents })
+  console.log('_________________________')
+
+  return { oldKdaEvents, newKdaEvents, orphans: orphanList }
 }
 
 const updateClient = async (prevKdaEvents) => {
-  const { newKdaEvents } = await getKdaEvents(prevKdaEvents)
-  kdaEvents.push(...newKdaEvents)
-  sse.send(kdaEvents, 'k:update')
+  try {
+    const { newKdaEvents, orphans, oldKdaEvents } = await getKdaEvents(prevKdaEvents)
+    if (initialEventsPoolCreated) {
+      initialEventsPoolCreated = true
+      sse.send(oldKdaEvents, 'k:update')
+      kdaEvents.push(...oldKdaEvents)
+    }
+
+    kdaEvents.push(...newKdaEvents)
+    orphansEvents.push(...orphans)
+    sse.send(newKdaEvents, 'k:update')
+    sse.send(orphans, 'k:update:orphans')
+  } catch (error) {
+    sse.send(error, 'k:error')
+  }
 }
 
-const startStreamingUpdates = async (prevKdaEvents) => {
+const startStreamingUpdates = async () => {
   while (true) {
-    await updateClient(prevKdaEvents)
+    await updateClient(kdaEvents, initialEventsPoolCreated)
     await new Promise((r) => setTimeout(r, 60000))
   }
 }
