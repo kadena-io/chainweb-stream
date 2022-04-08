@@ -1,6 +1,6 @@
 const TEST_REGEX = '(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|js?)$'
 
-module.exports = {
+const config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testRegex: TEST_REGEX,
   coverageReporters: ['lcov', 'text'],
@@ -31,3 +31,5 @@ module.exports = {
       '<rootDir>/__mocks__/fileMock.js',
   },
 }
+
+export default config
