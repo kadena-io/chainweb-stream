@@ -13,9 +13,9 @@
     "start": "node ./index.js",
     "dev": "nodemon ./index.js",
     "lint": "npx eslint ./src",
-    "test": "NODE_ENV=test jest --runInBand .",
-    "test:coverage": "NODE_ENV=test jest --runInBand . --coverage",
-    "test:watch": "NODE_ENV=test jest --runInBand --watch ."
+    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand .",
+    "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
+    "test:watch": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --watch ."
   },
   "dependencies": {
     "body-parser": "^1.19.2",
