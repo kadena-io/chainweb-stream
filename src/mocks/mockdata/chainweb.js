@@ -1,4 +1,12 @@
-export default [
+import { createHmac } from 'crypto'
+
+const secret = 'kadena'
+
+function createHash(text) {
+  return createHmac('sha256', secret).update(text).digest('hex')
+}
+
+export default () => [
   {
     blockTime: '2022-04-03T22:56:00.87117Z',
     height: 2083808,
@@ -19,7 +27,7 @@ export default [
     name: 'marmalade.ledger.TOKEN',
     idx: 1,
     chain: 1,
-    moduleHash: 'WHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+    moduleHash: createHash('send some kda'),
   },
   {
     blockTime: '2022-04-01T18:18:20.652786Z',
@@ -30,7 +38,7 @@ export default [
     name: 'marmalade.ledger.BUY',
     idx: 1,
     chain: 1,
-    moduleHash: 'THsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+    moduleHash: createHash('send some coins'),
   },
   {
     blockTime: '2022-04-01T18:18:20.652786Z',
@@ -41,6 +49,6 @@ export default [
     name: 'marmalade.ledger.ACCOUNT_GUARD',
     idx: 7,
     chain: 1,
-    moduleHash: 'PHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+    moduleHash: createHash('send some more coins'),
   },
 ]
