@@ -39,12 +39,13 @@ const syncEventsFromChainWeaverData = async (
   newestToOldest = false,
   moduleHashBlacklist = [],
 ) => {
-  var offset = 0
-  var promisedResults = []
-  var completedResults = []
-  var continueSync = true
+  let offset = 0
+  let promisedResults = []
+  let completedResults = []
+  let continueSync = true
+
   while (continueSync) {
-    for (var i = 0; i < threads; i++) {
+    for (let i = 0; i < threads; i++) {
       promisedResults.push(getChainWeaverDataEvents(name, offset, limit))
       offset = offset + limit
     }
@@ -70,8 +71,6 @@ const getKdaEvents = async (prevKdaEvents) => {
 
   // only update the new events req & blockhash
   prevEventHeight = prevKdaEvents.length ? prevKdaEvents[0].height : 0
-
-  console.log({ prevEventHeight, prevKdaEvents })
 
   const marmaladeEvents = await syncEventsFromChainWeaverData(
     'marmalade.',
@@ -103,19 +102,14 @@ const getKdaEvents = async (prevKdaEvents) => {
     })
   })
 
-  console.log({ prevEventHeight })
-  console.log({ orphanList })
-  console.log({ newKdaEvents })
-  console.log({ oldKdaEvents })
-  console.log('_________________________')
-
   return { oldKdaEvents, newKdaEvents, orphans: orphanList }
 }
 
 export const updateClient = async (prevKdaEvents) => {
   try {
     const { newKdaEvents, orphans, oldKdaEvents } = await getKdaEvents(prevKdaEvents)
-    if (initialEventsPoolCreated) {
+
+    if (!initialEventsPoolCreated) {
       initialEventsPoolCreated = true
       sse.send(oldKdaEvents, 'k:update')
       kdaEvents.push(...oldKdaEvents)

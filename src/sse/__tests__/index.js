@@ -29,8 +29,8 @@ const mockedEvents = [
 
 test('dummytest', async () => {
   const events = await updateClient(mockedEvents)
-  console.log(events)
-  expect(events.length).toBe(5)
+  expect(events.length).toBe(16)
+  expect(events[0].moduleHash).toEqual('RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
 })
 
 afterEach(() => stopStreaming())
