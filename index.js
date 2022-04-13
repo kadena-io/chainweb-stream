@@ -6,6 +6,7 @@ import helmet from 'helmet'
 import compression from 'compression'
 import { config } from './config/index.js'
 import { router } from './src/routes/sse.routes.js'
+import { startStreaming } from './src/sse/index.js'
 
 const { port } = config
 const app = express()
@@ -23,5 +24,6 @@ const server = http.createServer(app)
 console.log(port)
 
 server.listen(port, () => {
+  startStreaming()
   console.log(`KDA even Events service listening at http://localhost:${port}`)
 })

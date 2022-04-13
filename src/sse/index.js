@@ -6,6 +6,8 @@ import { config } from '../../config/index.js'
 
 export let kdaEvents = []
 export let orphansEvents = []
+export let continueStreaming = true
+
 let initialEventsPoolCreated = false
 let prevEventHeight = 0
 
@@ -110,7 +112,7 @@ const getKdaEvents = async (prevKdaEvents) => {
   return { oldKdaEvents, newKdaEvents, orphans: orphanList }
 }
 
-const updateClient = async (prevKdaEvents) => {
+export const updateClient = async (prevKdaEvents) => {
   try {
     const { newKdaEvents, orphans, oldKdaEvents } = await getKdaEvents(prevKdaEvents)
     if (initialEventsPoolCreated) {
@@ -123,16 +125,25 @@ const updateClient = async (prevKdaEvents) => {
     orphansEvents.push(...orphans)
     sse.send(newKdaEvents, 'k:update')
     sse.send(orphans, 'k:update:orphans')
+
+    return kdaEvents
   } catch (error) {
     sse.send(error, 'k:error')
+    return kdaEvents
   }
 }
 
 const startStreamingUpdates = async () => {
-  while (true) {
+  while (continueStreaming) {
     await updateClient(kdaEvents, initialEventsPoolCreated)
     await new Promise((r) => setTimeout(r, 60000))
   }
 }
 
-startStreamingUpdates(kdaEvents)
+export const stopStreaming = function () {
+  continueStreaming = false
+}
+
+export const startStreaming = function () {
+  startStreamingUpdates(kdaEvents)
+}

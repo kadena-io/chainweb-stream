@@ -8,7 +8,7 @@ export default [
     name: 'marmalade.ledger.TOKEN',
     idx: 1,
     chain: 1,
-    moduleHash: 'PHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+    moduleHash: 'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
   },
   {
     blockTime: '2022-04-03T22:35:47.993891Z',
@@ -19,7 +19,7 @@ export default [
     name: 'marmalade.ledger.TOKEN',
     idx: 1,
     chain: 1,
-    moduleHash: 'PHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+    moduleHash: 'WHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
   },
   {
     blockTime: '2022-04-01T18:18:20.652786Z',
@@ -30,7 +30,7 @@ export default [
     name: 'marmalade.ledger.BUY',
     idx: 1,
     chain: 1,
-    moduleHash: 'PHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+    moduleHash: 'THsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
   },
   {
     blockTime: '2022-04-01T18:18:20.652786Z',
