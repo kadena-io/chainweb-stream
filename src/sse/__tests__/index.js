@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from '@jest/globals'
-import { sse, updateClient, kdaEvents, stopStreaming } from '../index.js'
+import { sse, updateClient, kdaEvents, stopStreaming, orphans } from '../index.js'
 import { server } from '../../mocks/server.js'
 
 const mockedEvents = [
@@ -27,10 +27,18 @@ const mockedEvents = [
   },
 ]
 
-test('dummytest', async () => {
-  const events = await updateClient(mockedEvents)
-  expect(events.length).toBe(16)
-  expect(events[0].moduleHash).toEqual('RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
+test('Expect client to receive 20 events', async () => {
+  const { kdaEvents } = await updateClient(mockedEvents)
+  expect(kdaEvents.length).toBe(20)
+  expect(kdaEvents[0].moduleHash).toEqual('RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
+})
+
+test('Expect client to receive 20 events', async () => {
+  const { orphans } = await updateClient(mockedEvents)
+  expect(Object.keys(orphans).length).toBe(1)
+  expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].event.moduleHash).toEqual(
+    'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+  )
 })
 
 afterEach(() => stopStreaming())

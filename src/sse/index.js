@@ -5,13 +5,13 @@ import { config } from '../../config/index.js'
 // get latest data from db if needed
 
 export let kdaEvents = []
-export let orphansEvents = []
+export let orphans = {}
 export let continueStreaming = true
 
 let initialEventsPoolCreated = false
 let prevEventHeight = 0
 
-export const sse = new SSE({ kdaEvents, orphansEvents }, { initialEvent: 'k:init' })
+export const sse = new SSE({ kdaEvents, orphans }, { initialEvent: 'k:init' })
 
 const getChainWeaverDataEvents = async (name, offset, limit = 50) => {
   const rawRes = await fetch(
@@ -80,7 +80,7 @@ const getKdaEvents = async (prevKdaEvents) => {
     config.moduleHashBlacklist,
   )
 
-  const orphanList = []
+  const orphanKeyMap = {}
   const newKdaEvents = []
   const oldKdaEvents = []
 
@@ -93,16 +93,16 @@ const getKdaEvents = async (prevKdaEvents) => {
     }
   })
 
-  newKdaEvents.forEach((event) => {
-    newKdaEvents.forEach((event2) => {
+  //TODO optimize loop
+  marmaladeEvents.forEach((event) => {
+    marmaladeEvents.forEach((event2) => {
       if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
-        orphanList.push({ event, event2 })
-        console.log('____________orphanList_____________', { event, event2 })
+        orphans[event.requestKey] = { event, event2 }
       }
     })
   })
 
-  return { oldKdaEvents, newKdaEvents, orphans: orphanList }
+  return { oldKdaEvents, newKdaEvents, orphans }
 }
 
 export const updateClient = async (prevKdaEvents) => {
@@ -114,16 +114,14 @@ export const updateClient = async (prevKdaEvents) => {
       sse.send(oldKdaEvents, 'k:update')
       kdaEvents.push(...oldKdaEvents)
     }
-
     kdaEvents.push(...newKdaEvents)
-    orphansEvents.push(...orphans)
     sse.send(newKdaEvents, 'k:update')
     sse.send(orphans, 'k:update:orphans')
 
-    return kdaEvents
+    return { kdaEvents, orphans }
   } catch (error) {
     sse.send(error, 'k:error')
-    return kdaEvents
+    return { kdaEvents, orphans }
   }
 }
 

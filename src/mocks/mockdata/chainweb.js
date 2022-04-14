@@ -19,6 +19,17 @@ export default () => [
     moduleHash: 'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
   },
   {
+    blockTime: '2022-04-03T22:56:00.87117Z',
+    height: 2083808,
+    blockHash: 'RmODdWJNOMDjIkyzxikGoUtBO6WRe4Q_-Mb3SV-nmmw',
+    requestKey: 'C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU',
+    params: [Array],
+    name: 'marmalade.ledger.TOKEN',
+    idx: 1,
+    chain: 1,
+    moduleHash: 'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+  },
+  {
     blockTime: '2022-04-03T22:35:47.993891Z',
     height: 2083770,
     blockHash: 'mdekX5TsJ2cm9Oc6-Sw_Lh35dSsZZO2JV-12Of5_tX4',
