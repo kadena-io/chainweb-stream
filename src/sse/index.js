@@ -120,6 +120,8 @@ export const updateClient = async (prevKdaEvents) => {
       sse.send(oldKdaEvents, 'k:update')
       kdaEvents.push(...oldKdaEvents)
     }
+
+    //TODO create buffer of 6 level deep before send
     kdaEvents.push(...newKdaEvents)
     sse.send(newKdaEvents, 'k:update')
     sse.send(orphans, 'k:update:orphans')
