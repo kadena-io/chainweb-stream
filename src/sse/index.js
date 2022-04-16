@@ -6,6 +6,8 @@ import { config } from '../../config/index.js'
 
 export let kdaEvents = []
 export let orphans = {}
+export let lowestOrphanBlockheight
+export let highestNonOrphanBlockheight = 0
 export let continueStreaming = true
 
 let initialEventsPoolCreated = false
@@ -62,14 +64,9 @@ const syncEventsFromChainWeaverData = async (
 }
 
 const getKdaEvents = async (prevKdaEvents) => {
-  // TODO: hacky orphan detection
+  // TODO get main api
+  // TODO only update the new events req & blockhash
 
-  // same requestkey hash of transaction
-  // different blockhashes
-  // print out duplicates
-  // get main api
-
-  // only update the new events req & blockhash
   prevEventHeight = prevKdaEvents.length ? prevKdaEvents[0].height : 0
 
   const marmaladeEvents = await syncEventsFromChainWeaverData(
@@ -80,7 +77,6 @@ const getKdaEvents = async (prevKdaEvents) => {
     config.moduleHashBlacklist,
   )
 
-  const orphanKeyMap = {}
   const newKdaEvents = []
   const oldKdaEvents = []
 
@@ -93,11 +89,25 @@ const getKdaEvents = async (prevKdaEvents) => {
     }
   })
 
-  //TODO optimize loop
+  // TODO save blockheight of latest orphans if higher than previous
+  // TODO save current blockheight that is not an orphan highest is the fork
+
   marmaladeEvents.forEach((event) => {
     marmaladeEvents.forEach((event2) => {
       if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
         orphans[event.requestKey] = { event, event2 }
+        if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
+          lowestOrphanBlockheight = event.height
+        }
+        return false
+      }
+    })
+
+    // use every to break out of loop when found
+    marmaladeEvents.every(() => {
+      if (event.height < lowestOrphanBlockheight && event.height > highestNonOrphanBlockheight) {
+        highestNonOrphanBlockheight = event.height
+        return false
       }
     })
   })
@@ -118,10 +128,10 @@ export const updateClient = async (prevKdaEvents) => {
     sse.send(newKdaEvents, 'k:update')
     sse.send(orphans, 'k:update:orphans')
 
-    return { kdaEvents, orphans }
+    return { kdaEvents, newKdaEvents, orphans }
   } catch (error) {
     sse.send(error, 'k:error')
-    return { kdaEvents, orphans }
+    return { kdaEvents, prevKdaEvents, orphans }
   }
 }
 
