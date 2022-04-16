@@ -89,9 +89,6 @@ const getKdaEvents = async (prevKdaEvents) => {
     }
   })
 
-  // TODO save blockheight of latest orphans if higher than previous
-  // TODO save current blockheight that is not an orphan highest is the fork
-
   marmaladeEvents.forEach((event) => {
     marmaladeEvents.forEach((event2) => {
       if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
@@ -104,10 +101,9 @@ const getKdaEvents = async (prevKdaEvents) => {
     })
 
     // use every to break out of loop when found
-    marmaladeEvents.every(() => {
+    marmaladeEvents.forEach(() => {
       if (event.height < lowestOrphanBlockheight && event.height > highestNonOrphanBlockheight) {
         highestNonOrphanBlockheight = event.height
-        return false
       }
     })
   })

@@ -1,5 +1,12 @@
 import { afterEach, expect, test } from '@jest/globals'
-import { sse, updateClient, kdaEvents, stopStreaming, orphans } from '../index.js'
+import {
+  sse,
+  updateClient,
+  kdaEvents,
+  stopStreaming,
+  orphans,
+  highestNonOrphanBlockheight,
+} from '../index.js'
 import { server } from '../../mocks/server.js'
 
 const mockedEvents = [
@@ -29,17 +36,22 @@ const mockedEvents = [
 
 test('Expect client to receive 20 events', async () => {
   const { kdaEvents } = await updateClient(mockedEvents)
-  expect(kdaEvents.length).toBe(28)
-  expect(kdaEvents[0].moduleHash).toEqual('RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
+  expect(kdaEvents.length).toBe(44)
+  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
 })
 
 test('Expect to have 2 orphans events', async () => {
-  const { orphans, newKdaEvents } = await updateClient(mockedEvents)
-  console.log(newKdaEvents)
+  const { orphans } = await updateClient(mockedEvents)
   expect(Object.keys(orphans).length).toBe(2)
   expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].event.moduleHash).toEqual(
     'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
   )
+})
+
+test('Expect highestNonOrphanBlockheight to be 2083770', async () => {
+  const { orphans, newKdaEvents } = await updateClient(mockedEvents)
+  expect(Object.keys(orphans).length).toBe(2)
+  expect(highestNonOrphanBlockheight).toEqual(2083770)
 })
 
 afterEach(() => stopStreaming())
