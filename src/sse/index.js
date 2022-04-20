@@ -79,6 +79,7 @@ const getKdaEvents = async (prevKdaEvents) => {
 
   const newKdaEvents = []
   const oldKdaEvents = []
+  const orphanKeyMap = {}
 
   marmaladeEvents.forEach((event) => {
     if (event.height > prevEventHeight) {
@@ -92,10 +93,12 @@ const getKdaEvents = async (prevKdaEvents) => {
   marmaladeEvents.forEach((event) => {
     marmaladeEvents.forEach((event2) => {
       if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
-        orphans[event.requestKey] = { event, event2 }
+        orphanKeyMap[event.requestKey] = { event, event2 }
         if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
           lowestOrphanBlockheight = event.height
         }
+
+        console.log(orphanKeyMap)
         return false
       }
     })
@@ -108,12 +111,12 @@ const getKdaEvents = async (prevKdaEvents) => {
     })
   })
 
-  return { oldKdaEvents, newKdaEvents, orphans }
+  return { oldKdaEvents, newKdaEvents, orphanKeyMap }
 }
 
 export const updateClient = async (prevKdaEvents) => {
   try {
-    const { newKdaEvents, orphans, oldKdaEvents } = await getKdaEvents(prevKdaEvents)
+    const { newKdaEvents, orphanKeyMap, oldKdaEvents } = await getKdaEvents(prevKdaEvents)
 
     if (!initialEventsPoolCreated) {
       initialEventsPoolCreated = true
@@ -124,7 +127,13 @@ export const updateClient = async (prevKdaEvents) => {
     //TODO create buffer of 6 level deep before send
     kdaEvents.push(...newKdaEvents)
     sse.send(newKdaEvents, 'k:update')
-    sse.send(orphans, 'k:update:orphans')
+
+    Object.keys(orphanKeyMap).forEach((requestKey) => {
+      if (!orphans[requestKey]) {
+        orphans[requestKey] = orphanKeyMap[requestKey]
+        sse.send(orphans[requestKey], 'k:update:orphans')
+      }
+    })
 
     return { kdaEvents, newKdaEvents, orphans }
   } catch (error) {

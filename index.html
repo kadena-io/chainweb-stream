@@ -70,6 +70,12 @@
   });
 
 
+  es.addEventListener('k:error', function (event) {
+    console.log('event',  JSON.parse(event.error))
+    updateDomObject(JSON.parse(event.error), kdaOrphansSection)
+  });
+
+
 </script>
 </body>
 </html>
