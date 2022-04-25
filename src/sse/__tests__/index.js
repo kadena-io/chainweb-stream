@@ -34,13 +34,37 @@ const mockedEvents = [
   },
 ]
 
-test('Expect client to receive 20 events', async () => {
+test('Expect client to receive 44 events', async () => {
   const { kdaEvents } = await updateClient(mockedEvents)
   expect(kdaEvents.length).toBe(44)
   expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
 })
 
+test('Expect client to receive 44 events when same events after updateClient is called twice', async () => {
+  await updateClient(mockedEvents)
+  const { kdaEvents } = await updateClient(mockedEvents)
+  expect(kdaEvents.length).toBe(44)
+  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
+})
+
+test('Expect client to receive 44 events when same events after updateClient is called twice', async () => {
+  await updateClient(mockedEvents)
+  await updateClient(mockedEvents)
+  const { kdaEvents } = await updateClient(mockedEvents)
+  expect(kdaEvents.length).toBe(45)
+  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
+})
+
 test('Expect to have 2 orphans events', async () => {
+  const { orphans } = await updateClient(mockedEvents)
+  expect(Object.keys(orphans).length).toBe(2)
+  expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].event.moduleHash).toEqual(
+    'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+  )
+})
+
+test('Expect to have 2 orphans events  after updateClient is called twice', async () => {
+  await updateClient(mockedEvents)
   const { orphans } = await updateClient(mockedEvents)
   expect(Object.keys(orphans).length).toBe(2)
   expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].event.moduleHash).toEqual(

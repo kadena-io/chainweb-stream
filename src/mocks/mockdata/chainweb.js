@@ -6,6 +6,20 @@ function createHash(text) {
   return createHmac('sha256', secret).update(text).digest('hex')
 }
 
+export let updateData = () => [
+  {
+    blockTime: '2022-04-03T22:56:00.87117Z',
+    height: 2083909,
+    blockHash: 'WEEDdWJNOMDjIkyzxikGoUtBO6MxbFQ_-Mb3SV-nmmw',
+    requestKey: 'W_cERYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU',
+    params: [Array],
+    name: 'marmalade.ledger.TOKEN',
+    idx: 1,
+    chain: 1,
+    moduleHash: 'T4sfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
+  },
+]
+
 export default () => [
   {
     blockTime: '2022-04-03T22:56:00.87117Z',

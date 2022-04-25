@@ -67,8 +67,6 @@ const getKdaEvents = async (prevKdaEvents) => {
   // TODO get main api
   // TODO only update the new events req & blockhash
 
-  prevEventHeight = prevKdaEvents.length ? prevKdaEvents[0].height : 0
-
   const marmaladeEvents = await syncEventsFromChainWeaverData(
     'marmalade.',
     100,
@@ -81,6 +79,13 @@ const getKdaEvents = async (prevKdaEvents) => {
   const oldKdaEvents = []
   const orphanKeyMap = {}
 
+  prevKdaEvents.forEach((event) => {
+    if (event.height > prevEventHeight) {
+      prevEventHeight = event.height
+    }
+  })
+
+  console.log(prevEventHeight)
   marmaladeEvents.forEach((event) => {
     if (event.height > prevEventHeight) {
       newKdaEvents.push(event)
@@ -88,21 +93,17 @@ const getKdaEvents = async (prevKdaEvents) => {
     } else if (event.height <= prevEventHeight) {
       oldKdaEvents.push(event)
     }
-  })
-
-  marmaladeEvents.forEach((event) => {
     marmaladeEvents.forEach((event2) => {
       if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
         orphanKeyMap[event.requestKey] = { event, event2 }
         if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
           lowestOrphanBlockheight = event.height
         }
-
-        console.log(orphanKeyMap)
         return false
       }
     })
 
+    console.log(prevEventHeight)
     // use every to break out of loop when found
     marmaladeEvents.forEach(() => {
       if (event.height < lowestOrphanBlockheight && event.height > highestNonOrphanBlockheight) {
@@ -127,7 +128,7 @@ export const updateClient = async (prevKdaEvents) => {
     //TODO create buffer of 6 level deep before send
     kdaEvents.push(...newKdaEvents)
     sse.send(newKdaEvents, 'k:update')
-
+    console.log(newKdaEvents)
     Object.keys(orphanKeyMap).forEach((requestKey) => {
       if (!orphans[requestKey]) {
         orphans[requestKey] = orphanKeyMap[requestKey]
@@ -137,7 +138,8 @@ export const updateClient = async (prevKdaEvents) => {
 
     return { kdaEvents, newKdaEvents, orphans }
   } catch (error) {
-    sse.send(error, 'k:error')
+    // TODO implement status codes
+    sse.send({ message: 'something went wrong', type: error.type }, 'k:error')
     return { kdaEvents, prevKdaEvents, orphans }
   }
 }

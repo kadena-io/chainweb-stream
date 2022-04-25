@@ -71,8 +71,8 @@
 
 
   es.addEventListener('k:error', function (event) {
-    console.log('event',  JSON.parse(event.error))
-    updateDomObject(JSON.parse(event.error), kdaOrphansSection)
+    console.log('event',  JSON.parse(event.data))
+    updateDomObject(JSON.parse(event.data), kdaOrphansSection)
   });
 
 
