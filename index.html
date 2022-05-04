@@ -60,12 +60,12 @@
   });
 
   es.addEventListener('k:update', function (event) {
-    console.log('event', JSON.parse(event.data))
+    console.log('event k:update', JSON.parse(event.data))
     updateDom(JSON.parse(event.data), kdaSection)
   });
 
   es.addEventListener('k:update:orphans', function (event) {
-    console.log('event',  JSON.parse(event.data))
+    console.log('event k:update:orphans',  JSON.parse(event.data))
     updateDomObject(JSON.parse(event.data), kdaOrphansSection)
   });
 
