@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, expect, test } from '@jest/globals';
 import {
   sse,
   updateClient,
@@ -6,8 +6,8 @@ import {
   stopStreaming,
   orphans,
   highestNonOrphanBlockheight,
-} from '../index.js'
-import { server } from '../../mocks/server.js'
+} from '../index.js';
+import { server } from '../../mocks/server.js';
 
 const mockedEvents = [
   {
@@ -32,50 +32,63 @@ const mockedEvents = [
     chain: 1,
     moduleHash: 'PHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
   },
-]
+];
 
-test('Expect client to receive 44 events', async () => {
-  const { kdaEvents } = await updateClient(mockedEvents)
-  expect(kdaEvents.length).toBe(44)
-  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
-})
-
-test('Expect client to receive 44 events when same events after updateClient is called twice', async () => {
-  await updateClient(mockedEvents)
-  const { kdaEvents } = await updateClient(mockedEvents)
-  expect(kdaEvents.length).toBe(44)
-  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
-})
+test('Expect client to receive 36 events', async () => {
+  const { kdaEvents } = await updateClient(mockedEvents);
+  expect(kdaEvents.length).toBe(36);
+  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E');
+});
 
 test('Expect client to receive 44 events when same events after updateClient is called twice', async () => {
-  await updateClient(mockedEvents)
-  await updateClient(mockedEvents)
-  const { kdaEvents } = await updateClient(mockedEvents)
-  expect(kdaEvents.length).toBe(45)
-  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E')
-})
+  await updateClient(mockedEvents);
+  const { kdaEvents } = await updateClient(mockedEvents);
+  expect(kdaEvents.length).toBe(36);
+  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E');
+});
+
+test('Expect client to receive 44 events when same events after updateClient is called twice', async () => {
+  await updateClient(mockedEvents);
+  await updateClient(mockedEvents);
+  const { kdaEvents } = await updateClient(mockedEvents);
+  expect(kdaEvents.length).toBe(37);
+  expect(kdaEvents[0].moduleHash).toEqual('WHsfVNldp-NeYWmteIBt-PfdRTHcHaclu5bMLjsJM0E');
+});
 
 test('Expect to have 2 orphans events', async () => {
-  const { orphans } = await updateClient(mockedEvents)
-  expect(Object.keys(orphans).length).toBe(2)
-  expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].event.moduleHash).toEqual(
+  const { orphans } = await updateClient(mockedEvents);
+  expect(Object.keys(orphans).length).toBe(2);
+  expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].moduleHash).toEqual(
     'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
-  )
-})
+  );
+});
 
 test('Expect to have 2 orphans events  after updateClient is called twice', async () => {
-  await updateClient(mockedEvents)
-  const { orphans } = await updateClient(mockedEvents)
-  expect(Object.keys(orphans).length).toBe(2)
-  expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].event.moduleHash).toEqual(
+  const { orphans } = await updateClient(mockedEvents);
+  expect(Object.keys(orphans).length).toBe(2);
+  expect(orphans['C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU'].moduleHash).toEqual(
     'RHsfVNldp-N6YWmteIBt-PfdRTHcHaclu5bMLjsJM0E',
-  )
-})
+  );
+});
+
+test('Expect to have 2 orphans events not present in the kdaevents', async () => {
+  const { kdaEvents } = await updateClient(mockedEvents);
+
+  const foundEvents = kdaEvents.find(
+    (event) =>
+      event.requestKey === 'C_cQLYkAFljw_wVazIQs59jBgtI7rdDg5qYIHaR8njU' &&
+      event.blockHash === 'NmODdWJNOMDjIkyzxikGoUtBO6MxbFQ_-Mb3SV-nmmw',
+  );
+
+  console.log({ foundEvents });
+
+  expect(foundEvents).toBeUndefined();
+});
 
 test('Expect highestNonOrphanBlockheight to be 2083770', async () => {
-  const { orphans, newKdaEvents } = await updateClient(mockedEvents)
-  expect(Object.keys(orphans).length).toBe(2)
-  expect(highestNonOrphanBlockheight).toEqual(2083770)
-})
+  const { orphans, newKdaEvents } = await updateClient(mockedEvents);
+  expect(Object.keys(orphans).length).toBe(2);
+  expect(highestNonOrphanBlockheight).toEqual(2083770);
+});
 
-afterEach(() => stopStreaming())
+afterEach(() => stopStreaming());

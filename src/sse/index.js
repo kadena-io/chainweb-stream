@@ -1,7 +1,8 @@
 import SSE from 'express-sse';
-import _ from 'lodash';
-import fetch from 'node-fetch';
 import { config } from '../../config/index.js';
+import { detectOrphan, deleteOrphanEventsFromCache } from './orphans.js';
+import { syncEventsFromChainWeaverData } from './service.js';
+import { getPreviousEventHeight } from './utils.js';
 // get latest data from db if needed
 
 export let kdaEvents = [];
@@ -15,56 +16,10 @@ let prevEventHeight = 0;
 
 export const sse = new SSE({ kdaEvents, orphans }, { initialEvent: 'k:init' });
 
-const getChainWeaverDataEvents = async (name, offset, limit = 50) => {
-  const rawRes = await fetch(
-    `http://${config.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`,
-  );
-  const response = await rawRes;
-
-  if (response.ok) {
-    const resJSON = await rawRes.json();
-    return resJSON;
-  } else {
-    const resTEXT = await rawRes.text();
-    return resTEXT;
-  }
-};
-
-const sortEvents = (ev1, ev2, newestToOldest = false) => {
-  return newestToOldest ? ev2.height - ev1.height : ev1.height - ev2.height;
-};
-
-const syncEventsFromChainWeaverData = async (
-  name,
-  limit = 50,
-  threads = 4,
-  newestToOldest = false,
-  moduleHashBlacklist = [],
-) => {
-  let offset = 0;
-  let promisedResults = [];
-  let completedResults = [];
-  let continueSync = true;
-
-  while (continueSync) {
-    for (let i = 0; i < threads; i++) {
-      promisedResults.push(getChainWeaverDataEvents(name, offset, limit));
-      offset = offset + limit;
-    }
-
-    completedResults = await Promise.all(promisedResults);
-    // once a batch comes back empty, we're caught up
-    continueSync = _.every(_.map(completedResults, (v) => v.length >= limit));
-  }
-  completedResults = _.filter(_.flatten(completedResults), ({ moduleHash }) => {
-    return !moduleHashBlacklist.includes(moduleHash);
-  });
-  completedResults.sort((a, b) => sortEvents(a, b, newestToOldest));
-  return completedResults;
-};
-
 const getKdaEvents = async (prevKdaEvents) => {
-  // TODO get main api
+  const newKdaEvents = [];
+  const oldKdaEvents = [];
+  const orphanKeyMap = {};
 
   const marmaladeEvents = await syncEventsFromChainWeaverData(
     'marmalade.',
@@ -74,15 +29,7 @@ const getKdaEvents = async (prevKdaEvents) => {
     config.moduleHashBlacklist,
   );
 
-  const newKdaEvents = [];
-  const oldKdaEvents = [];
-  const orphanKeyMap = {};
-
-  prevKdaEvents.forEach((event) => {
-    if (event.height > prevEventHeight) {
-      prevEventHeight = event.height;
-    }
-  });
+  prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
 
   marmaladeEvents.forEach((event) => {
     if (event.height > prevEventHeight) {
@@ -92,8 +39,13 @@ const getKdaEvents = async (prevKdaEvents) => {
       oldKdaEvents.push(event);
     }
     marmaladeEvents.forEach((event2) => {
-      if (event.requestKey === event2.requestKey && event.blockHash !== event2.blockHash) {
-        orphanKeyMap[event.requestKey] = { event, event2 };
+      if (
+        !orphans[event.requestKey] &&
+        event.requestKey === event2.requestKey &&
+        event.blockHash !== event2.blockHash
+      ) {
+        orphanKeyMap[event.requestKey] = detectOrphan(event, event2);
+
         if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
           lowestOrphanBlockheight = event.height;
         }
@@ -120,17 +72,17 @@ export const updateClient = async (prevKdaEvents) => {
       sse.send(oldKdaEvents, 'k:update');
       kdaEvents.push(...oldKdaEvents);
     }
-
-    //TODO create buffer of 6 level deep before send
     kdaEvents.push(...newKdaEvents);
+
+    kdaEvents = deleteOrphanEventsFromCache(orphanKeyMap, kdaEvents);
+
     sse.send(newKdaEvents, 'k:update');
-    console.log(newKdaEvents);
-    Object.keys(orphanKeyMap).forEach((requestKey) => {
-      if (!orphans[requestKey]) {
-        orphans[requestKey] = orphanKeyMap[requestKey];
-        sse.send(orphans[requestKey], 'k:update:orphans');
-      }
-    });
+
+    orphans = { ...orphans, ...orphanKeyMap };
+
+    if (Object.keys(orphanKeyMap).length > 0) {
+      sse.send(orphanKeyMap, 'k:update:orphans');
+    }
 
     return { kdaEvents, newKdaEvents, orphans };
   } catch (error) {
