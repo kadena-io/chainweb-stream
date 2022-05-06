@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import every from 'lodash/every.js';
 import { filterBlackListItems, sortEvents } from './utils.js';
 import fetch from 'node-fetch';
 import { config } from '../../config/index.js';
@@ -23,7 +23,7 @@ export async function syncEventsFromChainWeaverData(
 
     completedResults = await Promise.all(promisedResults);
     // once a batch comes back empty, we're caught up
-    continueSync = _.every(_.map(completedResults, (v) => v.length >= limit));
+    continueSync = every(completedResults.map((v) => v.length >= limit));
   }
 
   completedResults = filterBlackListItems(completedResults, moduleHashBlacklist);

@@ -1,6 +1,5 @@
-import filter from 'lodash/filter';
-import flatten from 'lodash/flatten';
-import { highestNonOrphanBlockheight, lowestOrphanBlockheight } from './index.js';
+import filter from 'lodash/filter.js';
+import flatten from 'lodash/flatten.js';
 
 export function sortEvents(completedResults, newestToOldest = false) {
   completedResults.sort((event1, event2) =>
