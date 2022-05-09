@@ -97,6 +97,8 @@ const startStreamingUpdates = async () => {
     await updateClient(kdaEvents, initialEventsPoolCreated);
     await new Promise((r) => setTimeout(r, 60000));
   }
+
+  return { message: 'Streaming stopped' };
 };
 
 export const stopStreaming = function () {
@@ -104,5 +106,7 @@ export const stopStreaming = function () {
 };
 
 export const startStreaming = function () {
-  startStreamingUpdates(kdaEvents);
+  startStreamingUpdates(kdaEvents).then((event) => {
+    console.log(event.message);
+  });
 };
