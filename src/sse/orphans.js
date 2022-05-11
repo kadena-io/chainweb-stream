@@ -1,3 +1,5 @@
+import { getBlockHeaderBranch } from './service.js';
+
 export function deleteOrphanEventsFromCache(orphanKeymap, kdaEventArray) {
   const filteredEvents = kdaEventArray.filter((event) => {
     if (
@@ -13,6 +15,10 @@ export function deleteOrphanEventsFromCache(orphanKeymap, kdaEventArray) {
   return filteredEvents;
 }
 
-export function detectOrphan(event1, event2) {
-  return event2;
+export async function isOrphan({ chain, height, blockHash }, chainwebCut) {
+  const upper = chainwebCut.hashes[chain].hash;
+
+  const response = await getBlockHeaderBranch({ chain, upper, height });
+
+  return response.items[0].hash !== blockHash;
 }
