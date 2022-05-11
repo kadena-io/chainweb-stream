@@ -1,7 +1,7 @@
 import SSE from 'express-sse';
 import { config } from '../../config/index.js';
-import { detectOrphan, deleteOrphanEventsFromCache } from './orphans.js';
-import { syncEventsFromChainWeaverData } from './service.js';
+import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
+import { getChainwebCut, syncEventsFromChainWeaverData } from './service.js';
 import { getPreviousEventHeight } from './utils.js';
 // get latest data from db if needed
 
@@ -16,7 +16,7 @@ let prevEventHeight = 0;
 
 export const sse = new SSE({ kdaEvents, orphans }, { initialEvent: 'k:init' });
 
-const getKdaEvents = async (prevKdaEvents) => {
+const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
   const newKdaEvents = [];
   const oldKdaEvents = [];
   const orphanKeyMap = {};
@@ -31,41 +31,61 @@ const getKdaEvents = async (prevKdaEvents) => {
 
   prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
 
-  marmaladeEvents.forEach((event) => {
+  for (let index = 0; index < marmaladeEvents.length; index++) {
+    console.log(index);
+    const event = marmaladeEvents[index];
     if (event.height > prevEventHeight) {
       newKdaEvents.push(event);
       prevEventHeight = event.height;
     } else if (event.height <= prevEventHeight) {
       oldKdaEvents.push(event);
     }
-    marmaladeEvents.forEach((event2) => {
+
+    for (let innerIndex = 0; innerIndex < marmaladeEvents.length; innerIndex++) {
+      const event2 = marmaladeEvents[innerIndex];
+
       if (
         !orphans[event.requestKey] &&
         event.requestKey === event2.requestKey &&
         event.blockHash !== event2.blockHash
       ) {
-        orphanKeyMap[event.requestKey] = detectOrphan(event, event2);
+        const isEventOrphan = await isOrphan(event, chainwebCut);
+        const isEvent2Orphan = await isOrphan(event2, chainwebCut);
 
-        if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
-          lowestOrphanBlockheight = event.height;
+        if (isEventOrphan) {
+          orphanKeyMap[event.requestKey] = event;
+
+          if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
+            lowestOrphanBlockheight = event.height;
+          }
+        } else if (isEvent2Orphan) {
+          orphanKeyMap[event2.requestKey] = event2;
+
+          if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event2.height) {
+            lowestOrphanBlockheight = event2.height;
+          }
         }
-        return false;
       }
-    });
+    }
 
     marmaladeEvents.forEach(() => {
       if (event.height < lowestOrphanBlockheight && event.height > highestNonOrphanBlockheight) {
         highestNonOrphanBlockheight = event.height;
       }
     });
-  });
+  }
 
   return { oldKdaEvents, newKdaEvents, orphanKeyMap };
 };
 
-export const updateClient = async (prevKdaEvents) => {
+export const updateClient = async (prevKdaEvents, chainwebCut) => {
   try {
-    const { newKdaEvents, orphanKeyMap, oldKdaEvents } = await getKdaEvents(prevKdaEvents);
+    const { newKdaEvents, orphanKeyMap, oldKdaEvents } = await getKdaEvents(
+      prevKdaEvents,
+      chainwebCut,
+    );
+
+    console.log({ orphanKeyMap });
 
     if (!initialEventsPoolCreated) {
       initialEventsPoolCreated = true;
@@ -94,7 +114,8 @@ export const updateClient = async (prevKdaEvents) => {
 
 const startStreamingUpdates = async () => {
   while (continueStreaming) {
-    await updateClient(kdaEvents, initialEventsPoolCreated);
+    const chainwebCut = await getChainwebCut();
+    await updateClient(kdaEvents, chainwebCut);
     await new Promise((r) => setTimeout(r, 60000));
   }
 
