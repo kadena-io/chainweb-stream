@@ -32,8 +32,8 @@ const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
   prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
 
   for (let index = 0; index < marmaladeEvents.length; index++) {
-    console.log(index);
     const event = marmaladeEvents[index];
+
     if (event.height > prevEventHeight) {
       newKdaEvents.push(event);
       prevEventHeight = event.height;
@@ -49,11 +49,13 @@ const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
         event.requestKey === event2.requestKey &&
         event.blockHash !== event2.blockHash
       ) {
-        const isEventOrphan = await isOrphan(event, chainwebCut);
-        const isEvent2Orphan = await isOrphan(event2, chainwebCut);
+        const [isEventOrphan, isEvent2Orphan] = await Promise.all([
+          isOrphan(event, chainwebCut),
+          isOrphan(event2, chainwebCut),
+        ]);
 
         if (isEventOrphan) {
-          orphanKeyMap[event.requestKey] = event;
+          orphanKeyMap[event.requestKey] = { ...event, isOrphan: true };
 
           if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
             lowestOrphanBlockheight = event.height;
@@ -85,20 +87,23 @@ export const updateClient = async (prevKdaEvents, chainwebCut) => {
       chainwebCut,
     );
 
-    console.log({ orphanKeyMap });
-
     if (!initialEventsPoolCreated) {
       initialEventsPoolCreated = true;
       sse.send(oldKdaEvents, 'k:update');
       kdaEvents.push(...oldKdaEvents);
     }
-    kdaEvents.push(...newKdaEvents);
 
-    kdaEvents = deleteOrphanEventsFromCache(orphanKeyMap, kdaEvents);
+    const orphanlessKdaEvents = deleteOrphanEventsFromCache(orphanKeyMap, newKdaEvents);
+    console.log(kdaEvents.length, orphanlessKdaEvents);
+    kdaEvents = [...deleteOrphanEventsFromCache(orphanKeyMap, kdaEvents), ...orphanlessKdaEvents];
+    console.log(kdaEvents.length);
 
-    sse.send(newKdaEvents, 'k:update');
+    if (Object.keys(orphanlessKdaEvents).length > 0) {
+      sse.send(orphanlessKdaEvents, 'k:update');
+    }
 
     orphans = { ...orphans, ...orphanKeyMap };
+    console.log(orphans);
 
     if (Object.keys(orphanKeyMap).length > 0) {
       sse.send(orphanKeyMap, 'k:update:orphans');
