@@ -1,5 +1,5 @@
 import { rest } from 'msw';
-import blocks, { updateData } from './mockdata/chainweb';
+import blocks, { updateData, cut, blockHeaderBranch } from './mockdata/chainweb';
 import { config } from '../../config/index.js';
 
 let count = 0;
@@ -13,4 +13,15 @@ export const handlers = [
       return res(ctx.json(blocks()));
     }
   }),
+
+  rest.get(`https://${config.chainwebHost}/chainweb/0.0/testnet04/cut`, (_req, res, ctx) => {
+    return res(ctx.json(cut()));
+  }),
+
+  rest.get(
+    `https://${config.chainwebHost}/chainweb/0.0/testnet04/chain/1/header/branch`,
+    (_req, res, ctx) => {
+      return res(ctx.json(blockHeaderBranch()));
+    },
+  ),
 ];
