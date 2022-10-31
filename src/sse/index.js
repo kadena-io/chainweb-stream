@@ -1,126 +1,165 @@
 import SSE from 'express-sse';
 import { config } from '../../config/index.js';
 import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
-import { getChainwebCut, syncEventsFromChainWeaverData } from './service.js';
+import { getChainwebCut, syncEventsFromChainWebData } from './service.js';
 import { getPreviousEventHeight } from './utils.js';
+import { createClient } from 'redis';
+
 // get latest data from db if needed
 
-export let kdaEvents = [];
-export let orphans = {};
+/**
+ * When an event is issued by an orphan refresh the page are send the enitire cache to the page as a rehydrate
+ *
+ *
+ * /local gets the bleeding edge events probability is lowest that something change
+ *
+ * First fill the cache
+ * The call data specific events
+ *
+ *
+ */
 export let lowestOrphanBlockheight;
 export let highestNonOrphanBlockheight = 0;
 export let continueStreaming = true;
 
-let initialEventsPoolCreated = false;
 let prevEventHeight = 0;
 
-export const sse = new SSE({ kdaEvents, orphans }, { initialEvent: 'k:init' });
+const client = createClient();
+client.on('error', (err) => console.log('Redis Client Error', err));
+
+await client.connect();
+
+export async function clearRedisKDAEvents() {
+  try {
+    await client.set('kdaEvents', JSON.stringify([]));
+    return 'succes';
+  } catch (error) {
+    return { error };
+  }
+}
+
+export async function getRedisKdaEvents() {
+  const events = await client.get('kdaEvents');
+  return JSON.parse(events) || [];
+}
+
+export async function getOrphansKdaEvents() {
+  const events = await client.get('orphans');
+  return JSON.parse(events) || [];
+}
+
+const kdaEventsR = await getRedisKdaEvents();
+const orphanEventsR = await getOrphansKdaEvents();
+
+export const sse = new SSE(
+  { kdaEvents: kdaEventsR, orphans: orphanEventsR },
+  { initialEvent: 'k:init' },
+);
 
 const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
-  const newKdaEvents = [];
-  const oldKdaEvents = [];
+  let newKdaEvents = [];
   const orphanKeyMap = {};
 
-  const marmaladeEvents = await syncEventsFromChainWeaverData(
-    'marmalade.',
-    100,
-    4,
-    true,
-    config.moduleHashBlacklist,
-  );
+  try {
+    const marmaladeEvents = await syncEventsFromChainWebData(
+      'marmalade.',
+      100,
+      4,
+      true,
+      config.moduleHashBlacklist,
+    );
 
-  prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
-
-  for (let index = 0; index < marmaladeEvents.length; index++) {
-    const event = marmaladeEvents[index];
-
-    if (event.height > prevEventHeight) {
-      newKdaEvents.push(event);
-      prevEventHeight = event.height;
-    } else if (event.height <= prevEventHeight) {
-      oldKdaEvents.push(event);
+    if (prevKdaEvents.length === 0) {
+      newKdaEvents = marmaladeEvents;
     }
 
-    for (let innerIndex = 0; innerIndex < marmaladeEvents.length; innerIndex++) {
-      const event2 = marmaladeEvents[innerIndex];
+    const orphanEventsR = await getOrphansKdaEvents();
+    prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
 
-      if (
-        !orphans[event.requestKey] &&
-        event.requestKey === event2.requestKey &&
-        event.blockHash !== event2.blockHash
-      ) {
-        const [isEventOrphan, isEvent2Orphan] = await Promise.all([
-          isOrphan(event, chainwebCut),
-          isOrphan(event2, chainwebCut),
-        ]);
+    for (let index = 0; index < marmaladeEvents.length; index++) {
+      const event = marmaladeEvents[index];
 
-        if (isEventOrphan) {
-          orphanKeyMap[event.requestKey] = { ...event, isOrphan: true };
+      if (event.height > prevEventHeight) {
+        newKdaEvents.push(event);
+        prevEventHeight = event.height;
+      }
 
-          if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
-            lowestOrphanBlockheight = event.height;
-          }
-        } else if (isEvent2Orphan) {
-          orphanKeyMap[event2.requestKey] = event2;
+      for (let innerIndex = 0; innerIndex < marmaladeEvents.length; innerIndex++) {
+        const event2 = marmaladeEvents[innerIndex];
 
-          if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event2.height) {
-            lowestOrphanBlockheight = event2.height;
+        if (
+          !orphanEventsR[event.requestKey] &&
+          event.requestKey === event2.requestKey &&
+          event.blockHash !== event2.blockHash
+        ) {
+          const [isEventOrphan, isEvent2Orphan] = await Promise.all([
+            isOrphan(event, chainwebCut),
+            isOrphan(event2, chainwebCut),
+          ]);
+
+          if (isEventOrphan) {
+            orphanKeyMap[event.requestKey] = { ...event, isOrphan: true };
+
+            if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event.height) {
+              lowestOrphanBlockheight = event.height;
+            }
+          } else if (isEvent2Orphan) {
+            orphanKeyMap[event2.requestKey] = event2;
+
+            if (!lowestOrphanBlockheight || lowestOrphanBlockheight > event2.height) {
+              lowestOrphanBlockheight = event2.height;
+            }
           }
         }
       }
-    }
 
-    marmaladeEvents.forEach(() => {
-      if (event.height < lowestOrphanBlockheight && event.height > highestNonOrphanBlockheight) {
-        highestNonOrphanBlockheight = event.height;
-      }
-    });
+      marmaladeEvents.forEach(() => {
+        if (event.height < lowestOrphanBlockheight && event.height > highestNonOrphanBlockheight) {
+          highestNonOrphanBlockheight = event.height;
+        }
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    sse.send({ message: 'something went wrong', type: error.type }, 'k:error');
   }
 
-  return { oldKdaEvents, newKdaEvents, orphanKeyMap };
+  return { newKdaEvents, orphanKeyMap };
 };
 
 export const updateClient = async (prevKdaEvents, chainwebCut) => {
   try {
-    const { newKdaEvents, orphanKeyMap, oldKdaEvents } = await getKdaEvents(
-      prevKdaEvents,
-      chainwebCut,
-    );
-
-    if (!initialEventsPoolCreated) {
-      initialEventsPoolCreated = true;
-      sse.send(oldKdaEvents, 'k:update');
-      kdaEvents.push(...oldKdaEvents);
-    }
+    const { newKdaEvents, orphanKeyMap } = await getKdaEvents(prevKdaEvents, chainwebCut);
 
     const orphanlessKdaEvents = deleteOrphanEventsFromCache(orphanKeyMap, newKdaEvents);
-    console.log(kdaEvents.length, orphanlessKdaEvents);
-    kdaEvents = [...deleteOrphanEventsFromCache(orphanKeyMap, kdaEvents), ...orphanlessKdaEvents];
-    console.log(kdaEvents.length);
 
-    if (Object.keys(orphanlessKdaEvents).length > 0) {
+    if (orphanlessKdaEvents.length > 0) {
       sse.send(orphanlessKdaEvents, 'k:update');
+      await client.set('kdaEvents', JSON.stringify(orphanlessKdaEvents));
     }
 
-    orphans = { ...orphans, ...orphanKeyMap };
-    console.log(orphans);
-
-    if (Object.keys(orphanKeyMap).length > 0) {
-      sse.send(orphanKeyMap, 'k:update:orphans');
+    let orphansList = await getOrphansKdaEvents();
+    if (orphansList.length > 0 || Object.keys(orphanKeyMap).length > 0) {
+      orphansList = { ...orphansList, ...orphanKeyMap };
+      await client.set('orphans', JSON.stringify(orphansList));
+      sse.send(orphansList, 'k:update:orphans');
     }
 
-    return { kdaEvents, newKdaEvents, orphans };
+    return { newKdaEvents, orphans: orphansList };
   } catch (error) {
     // TODO implement status codes
+    console.log({ error });
     sse.send({ message: 'something went wrong', type: error.type }, 'k:error');
-    return { kdaEvents, prevKdaEvents, orphans };
   }
 };
 
 const startStreamingUpdates = async () => {
   while (continueStreaming) {
+    const kdaEventsR = await getRedisKdaEvents();
     const chainwebCut = await getChainwebCut();
-    await updateClient(kdaEvents, chainwebCut);
+
+    await updateClient(kdaEventsR, chainwebCut);
+
     await new Promise((r) => setTimeout(r, 60000));
   }
 
@@ -132,7 +171,7 @@ export const stopStreaming = function () {
 };
 
 export const startStreaming = function () {
-  startStreamingUpdates(kdaEvents).then((event) => {
+  startStreamingUpdates().then((event) => {
     console.log(event.message);
   });
 };

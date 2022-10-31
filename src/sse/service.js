@@ -2,6 +2,7 @@ import every from 'lodash/every.js';
 import { filterBlackListItems, sortEvents } from './utils.js';
 import fetch, { Headers } from 'node-fetch';
 import { config } from '../../config/index.js';
+import { blockHeaderBranch } from '../mocks/mockdata/chainweb.js';
 
 async function getResponse(rawRes) {
   const response = await rawRes;
@@ -33,7 +34,7 @@ async function postData(url = '', data = {}) {
   return response;
 }
 
-export async function syncEventsFromChainWeaverData(
+export async function syncEventsFromChainWebData(
   name,
   limit = 50,
   threads = 4,
@@ -47,7 +48,7 @@ export async function syncEventsFromChainWeaverData(
 
   while (continueSync) {
     for (let i = 0; i < threads; i++) {
-      promisedResults.push(getChainWeaverDataEvents(name, offset, limit));
+      promisedResults.push(getChainWebDataEvents(name, offset, limit));
       offset = offset + limit;
     }
 
@@ -63,10 +64,14 @@ export async function syncEventsFromChainWeaverData(
   return completedResults;
 }
 
-export async function getChainWeaverDataEvents(name, offset, limit = 50) {
+export async function getChainWebDataEvents(name, offset, limit = 50) {
   const rawRes = await fetch(
     `http://${config.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`,
   );
+
+  if (rawRes.status === 500) {
+    throw new Error({ ...rawRes });
+  }
 
   return getResponse(rawRes);
 }
@@ -78,10 +83,13 @@ export async function getChainwebCut() {
 }
 
 export async function getBlockHeaderBranch({ chain, upper, height, limit = 10 }) {
-  const rawRes = await postData(
+  // TODO
+  const rawRes = blockHeaderBranch(); /*await postData(
     `https://${config.chainwebHost}/chainweb/0.0/testnet04/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
     { lower: [], upper: [upper] },
   );
+*/
 
-  return getResponse(rawRes);
+  //return getResponse(rawRes);
+  return rawRes;
 }

@@ -1,5 +1,6 @@
 export const config = {
   port: process.env.PORT === 'production' ? process.env.PORT : process.env.PORT,
+  password: process.env.PASSWORD,
   origin:
     process.env.NODE_ENV === 'production' ? process.env.REMOTE_APP_URL : process.env.LOCAL_APP_URL,
   dataHost: process.env.NODE_ENV === 'production' ? process.env.DATA_HOST : process.env.DATA_HOST,

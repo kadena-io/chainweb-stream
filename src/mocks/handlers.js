@@ -18,7 +18,7 @@ export const handlers = [
     return res(ctx.json(cut()));
   }),
 
-  rest.get(
+  rest.post(
     `https://${config.chainwebHost}/chainweb/0.0/testnet04/chain/1/header/branch`,
     (_req, res, ctx) => {
       return res(ctx.json(blockHeaderBranch()));

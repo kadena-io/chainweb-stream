@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang='en'>
 <head>
   <meta charset='UTF-8'>
@@ -35,7 +35,7 @@
   const kdaSection = document.querySelector('#kdaevents')
 
   function updateDom(eventsArray, parentDOM) {
-    eventsArray.forEach((data) => {
+    eventsArray.reverse().forEach((data) => {
       const div = document.createElement('div');
       div.classList.add('block');
       div.innerHTML = JSON.stringify(data)
@@ -45,13 +45,18 @@
 
 
   function updateDomObject(eventsObject, parentDOM) {
+    console.log(eventsObject);
+    const div2 = document.createElement('div');
+
     Object.keys(eventsObject).forEach((data) => {
       const orphanObject = eventsObject[data];
       const div = document.createElement('div');
       div.classList.add('block');
       div.innerHTML = JSON.stringify(orphanObject)
-      parentDOM.prepend(div)
+      div2.appendChild(div)
     })
+
+    parentDOM.innerHTML = div2.innerHTML;
   }
 
   es.addEventListener('k:init', function (event) {
@@ -71,6 +76,7 @@
 
 
   es.addEventListener('k:error', function (event) {
+    debugger;
     console.log('event',  JSON.parse(event.data))
     updateDomObject(JSON.parse(event.data), kdaOrphansSection)
   });

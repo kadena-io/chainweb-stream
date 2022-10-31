@@ -15,7 +15,7 @@ export function filterBlackListItems(completedResults, moduleHashBlacklist) {
   });
 }
 
-export function getPreviousEventHeight(prevKdaEvents, prevEventHeight) {
+export function getPreviousEventHeight(prevKdaEvents = [], prevEventHeight) {
   prevKdaEvents.forEach((event) => {
     if (event.height > prevEventHeight) {
       prevEventHeight = event.height;
