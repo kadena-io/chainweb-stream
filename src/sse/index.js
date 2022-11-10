@@ -24,8 +24,18 @@ export let continueStreaming = true;
 
 let prevEventHeight = 0;
 
-const client = createClient();
-client.on('error', (err) => console.log('Redis Client Error', err));
+const { redisPassword } = config;
+
+const redisOptions = redisPassword ? { password: redisPassword } : {};
+let client;
+try {
+  client = createClient(redisOptions);
+} catch(e) {
+  console.error(e);
+  console.error(e.message);
+  process.exit(1);
+}
+client.on('error', (err) => console.error('Redis Client Error', err));
 
 await client.connect();
 
