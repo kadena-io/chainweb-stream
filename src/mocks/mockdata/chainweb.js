@@ -1,4 +1,7 @@
 import { createHmac } from 'crypto';
+import { config } from '../../config/index.js';
+
+const { network } = config;
 
 const secret = 'kadena';
 
@@ -38,7 +41,7 @@ export let blockHeaderBranch = () => {
         chainId: 13,
         weight: '6LHJwgvQwxZfBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
         height: 2266858,
-        chainwebVersion: 'testnet04',
+        chainwebVersion: network, // TODO do we want variable network name here or don't care? same for all instances on this file
         epochStart: 1640411096476109,
         featureFlags: 0,
         hash: 'PmODdWJNOMDjIkyzxikGoUtBO6WRe4Q_-Mb3SV-nmmw',
@@ -135,7 +138,7 @@ export let cut = () => {
     origin: null,
     weight: 'pI3RbQFrAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
     height: 43843235,
-    instance: 'testnet04',
+    instance: network,
     id: 'oJki4lWWP-Q-4gscTV_H1nlDOaXJfj3tXIotsAPakUU',
   };
 };
