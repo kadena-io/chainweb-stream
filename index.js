@@ -25,5 +25,5 @@ console.log(port);
 
 server.listen(port, () => {
   startStreaming();
-  console.log(`KDA even Events service listening at http://localhost:${port} - ${new Date().toString()}`);
+  console.log(`KDA Events service (${config.network}) listening at http://localhost:${port} - ${new Date().toString()}`);
 });
