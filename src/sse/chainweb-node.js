@@ -1,0 +1,42 @@
+import { writeFileSync } from 'fs';
+import { getResponse, fetchWithRetry, postData } from './http.js';
+import { summarizeChainwebCut } from './utils.js';
+import { config } from '../../config/index.js';
+
+const { chainwebHost, network } = config;
+
+export async function getChainwebCut() {
+  const rawRes = await fetchWithRetry(`https://${chainwebHost}/chainweb/0.0/${network}/cut`);
+  const response = await getResponse(rawRes);
+  const summary = summarizeChainwebCut(response);
+  console.error('Got CW cut', JSON.stringify(summary));
+  writeFileSync('cw-cut.json', JSON.stringify(response));
+  return response;
+}
+
+const blockHeaderCache = {};
+function makeBlockHeaderCacheKey(chain, hash, height) {
+  return `${chain}:${height}:${hash}`
+}
+
+export async function getBlockHeaderBranch({ chain, hash, height, limit = 10 }) {
+  if (!hash) {
+    const cut = await getChainwebCut();
+    hash = cut.hashes[chain].hash;
+  }
+  const cacheKey = makeBlockHeaderCacheKey(chain, hash, height);
+  if (blockHeaderCache[cacheKey]) {
+    console.error('Returning cached block headers', cacheKey);
+    return blockHeaderCache[cacheKey];
+  }
+  const rawRes = await postData(
+    `https://${chainwebHost}/chainweb/0.0/${network}/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
+    { lower: [], upper: [hash] },
+  );
+
+  const response = await getResponse(rawRes);
+  console.log(`Block Header req c=${chain} height=${height} hash=${hash} got ${JSON.stringify(response)}`);
+  blockHeaderCache[cacheKey] = response;
+
+  return response;
+}

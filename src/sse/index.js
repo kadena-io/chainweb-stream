@@ -1,7 +1,8 @@
 import SSE from 'express-sse';
 import { config } from '../../config/index.js';
 import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
-import { getChainwebCut, syncEventsFromChainWebData } from './service.js';
+import { syncEventsFromChainWebData } from './service.js';
+import { getChainwebCut } from './chainweb-node.js';
 import { getPreviousEventHeight } from './utils.js';
 import { createClient } from 'redis';
 

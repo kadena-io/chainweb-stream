@@ -1,38 +1,12 @@
+import { writeFileSync } from 'fs';
 import every from 'lodash/every.js';
 import { filterBlackListItems, sortEvents } from './utils.js';
 import fetch, { Headers } from 'node-fetch';
 import { config } from '../../config/index.js';
-import { blockHeaderBranch } from '../mocks/mockdata/chainweb.js';
+import { fetchWithRetry, postData, getResponse } from './http.js';
+import { getChainWebDataEvents } from './chainweb-data.js';
 
-async function getResponse(rawRes) {
-  const response = await rawRes;
-
-  if (response.ok) {
-    const resJSON = await rawRes.json();
-    return resJSON;
-  } else {
-    const resTEXT = await rawRes.text();
-    return resTEXT;
-  }
-}
-
-async function postData(url = '', data = {}) {
-  const headers = new Headers({
-    'Content-Type': 'application/json',
-    accept: 'application/json;blockheader-encoding=object',
-  });
-
-  const response = await fetch(url, {
-    method: 'POST',
-    mode: 'no-cors',
-    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-    headers,
-    redirect: 'follow',
-    referrerPolicy: 'no-referrer',
-    body: JSON.stringify(data),
-  });
-  return response;
-}
+const { chainwebHost, dataHost, network } = config;
 
 export async function syncEventsFromChainWebData(
   name,
@@ -40,6 +14,7 @@ export async function syncEventsFromChainWebData(
   threads = 4,
   newestToOldest = false,
   moduleHashBlacklist = [],
+  totalLimit = 800,
 ) {
   let offset = 0;
   let promisedResults = [];
@@ -51,45 +26,26 @@ export async function syncEventsFromChainWebData(
       promisedResults.push(getChainWebDataEvents(name, offset, limit));
       offset = offset + limit;
     }
-
+    console.log('batch pushed, end offset', offset);
     completedResults = await Promise.all(promisedResults);
+    debugger;
     // once a batch comes back empty, we're caught up
-    continueSync = every(completedResults.map((v) => v.length >= limit));
+    continueSync = every(completedResults.map((v) => v.length >= limit)) &&
+      ( totalLimit > 0 ?
+        completedResults.reduce((total, results) => total + results.length, 0) <= totalLimit
+        : true );
   }
+
+  console.log('sync fetch finished');
 
   completedResults = filterBlackListItems(completedResults, moduleHashBlacklist);
 
   sortEvents(completedResults, newestToOldest);
 
+  console.log('sync finished', completedResults.length);
+
+  writeFileSync('sync-event-data.json', JSON.stringify(completedResults));
+
   return completedResults;
 }
 
-export async function getChainWebDataEvents(name, offset, limit = 50) {
-  const rawRes = await fetch(
-    `http://${config.dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`,
-  );
-
-  if (rawRes.status === 500) {
-    throw new Error({ ...rawRes });
-  }
-
-  return getResponse(rawRes);
-}
-
-export async function getChainwebCut() {
-  const rawRes = await fetch(`https://${config.chainwebHost}/chainweb/0.0/testnet04/cut`);
-
-  return getResponse(rawRes);
-}
-
-export async function getBlockHeaderBranch({ chain, upper, height, limit = 10 }) {
-  // TODO
-  const rawRes = blockHeaderBranch(); /*await postData(
-    `https://${config.chainwebHost}/chainweb/0.0/testnet04/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
-    { lower: [], upper: [upper] },
-  );
-*/
-
-  //return getResponse(rawRes);
-  return rawRes;
-}

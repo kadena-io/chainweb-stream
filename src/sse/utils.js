@@ -24,3 +24,23 @@ export function getPreviousEventHeight(prevKdaEvents = [], prevEventHeight) {
 
   return prevEventHeight;
 }
+
+export async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function summarizeChainwebCut(data) {
+  if (!data?.hashes) {
+    return;
+  }
+  const { instance, hashes, height } = data;
+  const [min, max] = Object.entries(hashes).reduce((out, [_, { height }]) => {
+    if (out[0] > height)
+      out[0] = height
+    if (out[1] < height) {
+      out[1] = height
+    }
+    return out;
+  }, [Infinity, -Infinity]);
+  return { instance, min, max, height };
+}
