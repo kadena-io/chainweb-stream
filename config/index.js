@@ -1,15 +1,48 @@
+/*
+ * Helpers
+ */
+function die(message) {
+  console.error(`FATAL: ${message}`);
+  process.exit(1);
+}
+
+function isProduction() {
+  return process.env.NODE_ENV === 'production';
+}
+
+/*
+ * Required/Defaulted key definitions
+ */
+const REQUIRE_KEYS = {
+  PORT: 'port',
+  [isProduction() ? 'REMOTE_APP_URL' : 'LOCAL_APP_URL']: 'origin',
+  DATA_HOST: 'dataHost',
+  CHAINWEB_HOST: 'chainwebHost',
+  NETWORK: 'network',
+};
+
+const DEFAULT_KEYS = {
+  HTTP_RETRY_BACKOFF_STEP: ['httpRetryBackoffStep', 2000],
+  HTTP_MAX_RETRIES: ['httpMaxRetries', 2000],
+  HTTP_MAX_RETRIES: ['httpMaxRetries', 2000],
+  ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
+  REDIS_PASSWORD: ['redisPassword', ''],
+  ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
+}
+
+/*
+ * Cast & enforce numeric for these keys
+ */
+const NUMERIC_KEYS = [
+  'port',
+  'httpRetryBackoffStep',
+  'httpMaxRetries',
+];
+
+/*
+ * Default config includes module hash blacklist for now
+ */
 export const config = {
-  port: process.env.PORT === 'production' ? process.env.PORT : process.env.PORT,
-  redisPassword: process.env.REDIS_PASSWORD,
-  origin:
-    process.env.NODE_ENV === 'production' ? process.env.REMOTE_APP_URL : process.env.LOCAL_APP_URL,
-  dataHost: process.env.NODE_ENV === 'production' ? process.env.DATA_HOST : process.env.DATA_HOST,
-  chainwebHost:
-    process.env.NODE_ENV === 'production' ? process.env.CHAINWEB_HOST : process.env.CHAINWEB_HOST,
-  estatsChainwebHost:
-    process.env.NODE_ENV === 'production'
-      ? process.env.ESTATS_CHAINWEB_HOST
-      : process.env.ESTATS_CHAINWEB_HOST,
   moduleHashBlacklist: [
     'LKQj2snGFz7Y8iyYlSm3uIomEAYb0C9zXCkTIPtzkPU',
     'F7tD1QlT8dx8BGyyq-h22OECYS7C3FfcYaRyxt6D1YQ',
@@ -24,3 +57,37 @@ export const config = {
     '78ngDzxXE8ZyHE-kFm2h7-6Xm8N8uwU_xd1fasO8gWU',
   ],
 };
+
+/*
+ * action!
+ */
+// map required keys
+for (const [requireKey, configKey] of Object.entries(REQUIRE_KEYS)) {
+  const envValue = process.env[requireKey];
+  if (typeof envValue === "undefined") {
+    die(`Required env var missing: ${requireKey}`);
+  }
+  config[configKey] = envValue;
+}
+
+// map keys with default values
+for (const [envKey, [configKey, defaultValue]] of Object.entries(DEFAULT_KEYS)) {
+  const envValue = process.env[envKey];
+  config[configKey] = envValue ?? defaultValue;
+}
+
+// cast & enforce numeric keys
+for (const key of NUMERIC_KEYS) {
+  const value = config[key];
+  const intValue = parseInt(value, 10);
+  if (!isNaN(intValue)) {
+    config[key] = intValue;
+    continue;
+  }
+  const floatValue = parseFloat(value);
+  if (!isNaN(floatValue)) {
+    config[key] = floatValue;
+    continue;
+  }
+  die(`Numeric env var not parsable as number: ${key} value: ${value}`);
+}
