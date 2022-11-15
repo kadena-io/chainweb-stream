@@ -2,9 +2,9 @@ import { afterEach, expect, test } from '@jest/globals';
 import {
   sse,
   updateClient,
-  getRedisKdaEvents,
+  getRedisConfirmedEvents,
   stopStreaming,
-  getOrphansKdaEvents,
+  getRedisOrphanEvents,
   highestNonOrphanBlockheight,
 } from '../index.js';
 import { server } from '../../mocks/server.js';

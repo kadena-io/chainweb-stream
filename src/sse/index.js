@@ -4,7 +4,7 @@ import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
 import { syncEventsFromChainWebData } from './service.js';
 import { getChainwebCut } from './chainweb-node.js';
 import { getPreviousEventHeight } from './utils.js';
-import { createClient } from 'redis';
+import { getRedisConfirmedEvents, getRedisOrphanEvents } from './redis.js';
 
 // get latest data from db if needed
 
@@ -25,42 +25,8 @@ export let continueStreaming = true;
 
 let prevEventHeight = 0;
 
-const { redisPassword } = config;
-
-const redisOptions = redisPassword ? { password: redisPassword } : {};
-let client;
-try {
-  client = createClient(redisOptions);
-} catch(e) {
-  console.error(e);
-  console.error(e.message);
-  process.exit(1);
-}
-client.on('error', (err) => console.error('Redis Client Error', err));
-
-await client.connect();
-
-export async function clearRedisKDAEvents() {
-  try {
-    await client.set('kdaEvents', JSON.stringify([]));
-    return 'succes';
-  } catch (error) {
-    return { error };
-  }
-}
-
-export async function getRedisKdaEvents() {
-  const events = await client.get('kdaEvents');
-  return JSON.parse(events) || [];
-}
-
-export async function getOrphansKdaEvents() {
-  const events = await client.get('orphans');
-  return JSON.parse(events) || [];
-}
-
-const kdaEventsR = await getRedisKdaEvents();
-const orphanEventsR = await getOrphansKdaEvents();
+const kdaEventsR = await getRedisConfirmedEvents();
+const orphanEventsR = await getRedisOrphanEvents();
 
 export const sse = new SSE(
   { kdaEvents: kdaEventsR, orphans: orphanEventsR },
@@ -84,7 +50,7 @@ const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
       newKdaEvents = marmaladeEvents;
     }
 
-    const orphanEventsR = await getOrphansKdaEvents();
+    const orphanEventsR = await getRedisOrphanEvents();
     prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
 
     for (let index = 0; index < marmaladeEvents.length; index++) {
@@ -149,7 +115,7 @@ export const updateClient = async (prevKdaEvents, chainwebCut) => {
       await client.set('kdaEvents', JSON.stringify(orphanlessKdaEvents));
     }
 
-    let orphansList = await getOrphansKdaEvents();
+    let orphansList = await getRedisOrphanEvents();
     if (orphansList.length > 0 || Object.keys(orphanKeyMap).length > 0) {
       orphansList = { ...orphansList, ...orphanKeyMap };
       await client.set('orphans', JSON.stringify(orphansList));
@@ -166,7 +132,7 @@ export const updateClient = async (prevKdaEvents, chainwebCut) => {
 
 const startStreamingUpdates = async () => {
   while (continueStreaming) {
-    const kdaEventsR = await getRedisKdaEvents();
+    const kdaEventsR = await getRedisConfirmedEvents();
     const chainwebCut = await getChainwebCut();
 
     await updateClient(kdaEventsR, chainwebCut);

@@ -14,7 +14,10 @@ export async function getChainwebCut() {
   return response;
 }
 
+// small enough to cache here or should this go to redis as well?
+// should we implement/find a LimitedMap that stores the last 100/1000 objects thrown at it?
 const blockHeaderCache = {};
+
 function makeBlockHeaderCacheKey(chain, hash, height) {
   return `${chain}:${height}:${hash}`
 }
