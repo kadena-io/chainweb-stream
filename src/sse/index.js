@@ -3,8 +3,8 @@ import { config } from '../../config/index.js';
 import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
 import { syncEventsFromChainWebData } from './service.js';
 import { getChainwebCut } from './chainweb-node.js';
-import { getPreviousEventHeight } from './utils.js';
-import { getRedisConfirmedEvents, getRedisOrphanEvents } from './redis.js';
+import { getPreviousEventHeight, sleep } from './utils.js';
+import { getRedisConfirmedEvents, setRedisOrphanEvents, getRedisOrphanEvents } from './redis/index.js';
 
 // get latest data from db if needed
 
@@ -112,19 +112,18 @@ export const updateClient = async (prevKdaEvents, chainwebCut) => {
 
     if (orphanlessKdaEvents.length > 0) {
       sse.send(orphanlessKdaEvents, 'k:update');
-      await client.set('kdaEvents', JSON.stringify(orphanlessKdaEvents));
+      await setRedisOrphanEvents(JSON.stringify(orphanlessKdaEvents));
     }
 
     let orphansList = await getRedisOrphanEvents();
     if (orphansList.length > 0 || Object.keys(orphanKeyMap).length > 0) {
       orphansList = { ...orphansList, ...orphanKeyMap };
-      await client.set('orphans', JSON.stringify(orphansList));
+      await setRedisOrphanEvents(JSON.stringify(orphansList));
       sse.send(orphansList, 'k:update:orphans');
     }
 
     return { newKdaEvents, orphans: orphansList };
   } catch (error) {
-    // TODO implement status codes
     console.log({ error });
     sse.send({ message: 'something went wrong', type: error.type }, 'k:error');
   }
