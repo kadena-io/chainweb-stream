@@ -4,12 +4,13 @@ import { getResponse, fetchWithRetry, postData } from './http.js';
 
 const CLASS_NAME = 'ChainwebCutService'
 
-export default class ChainWebCutService {
+export default class ChainwebCutService {
   _config;
   _updateInterval;
   _intervalId;
   _updateCallbacks = new Set();
   lastCut;
+  running = false;
 
   constructor(config = defaultConfig) {
     const { chainwebHost, network, updateInterval = 30_000 } = config;
@@ -24,8 +25,10 @@ export default class ChainWebCutService {
     if (this._intervalId) {
       throw new Error(`${CLASS_NAME}.start() called but it was already running`);
     }
+    this.running = true;
     // TODO Should we do this with Timeouts and re-schedule after step()?
     // (that was we would factor delays in getting upstream data into our update timings)
+    // OTOH this should be quick usually
     this._intervalId = setInterval(() => this._step(), this._updateInterval);
     this._step();
     console.log(`${CLASS_NAME} started`);
@@ -35,6 +38,7 @@ export default class ChainWebCutService {
     if (!this._intervalId) {
       throw new Error(`${CLASS_NAME}.stop() called but it was not running`);
     }
+    this.running = false;
     clearInterval(this._intervalId);
     this._intervalId = undefined;
     console.log(`${CLASS_NAME} stopped`);
@@ -75,6 +79,7 @@ export default class ChainWebCutService {
     // depends if this.lastCut is going to be used externally
     try {
       this.lastCut = await this._getCut();
+      // should we register errorCallbacks in case getCut fails despite retries?
     } catch(e) {
       console.warn(`${CLASS_NAME} could not get cut: ${e.message}`);
       return;
@@ -91,3 +96,5 @@ export default class ChainWebCutService {
     return response;
   }
 }
+
+debugger;
