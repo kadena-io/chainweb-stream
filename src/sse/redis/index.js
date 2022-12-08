@@ -7,37 +7,51 @@ import {
   KEY_SUFFIX_ORPHANED,
   KEY_SUFFIX_LAST_STATE,
 } from './client.js';
+import { validateType } from '../utils.js';
 
-export function getRedisConfirmedEvents() {
-  return getRedisKeyJSON(`${KEY_SUFFIX_CONFIRMED}`);
+function makeKey(base, suffix) {
+  validateType('REDIS', 'filter', suffix, 'string');
+  return `${base}:${suffix}`;
 }
 
-export function setRedisConfirmedEvents(events) {
-  return setRedisKeyJSON(`${KEY_SUFFIX_CONFIRMED}`, events);
+export function getRedisConfirmedEvents(filter) {
+  const key = makeKey(KEY_SUFFIX_CONFIRMED, filter);
+  return getRedisKeyJSON(key);
 }
 
-export function getRedisUnconfirmedEvents() {
-  return getRedisKeyJSON(`${KEY_SUFFIX_UNCONFIRMED}`);
+export function setRedisConfirmedEvents(filter, events) {
+  const key = makeKey(KEY_SUFFIX_CONFIRMED, filter);
+  return setRedisKeyJSON(key, events);
 }
 
-export function setRedisUnconfirmedEvents(events) {
-  return setRedisKeyJSON(`${KEY_SUFFIX_UNCONFIRMED}`, events);
+export function getRedisUnconfirmedEvents(filter) {
+  const key = makeKey(KEY_SUFFIX_UNCONFIRMED, filter);
+  return getRedisKeyJSON(key);
 }
 
-export function getRedisOrphanEvents() {
-  return getRedisKeyJSON(`${KEY_SUFFIX_ORPHANED}`);
+export function setRedisUnconfirmedEvents(filter, events) {
+  const key = makeKey(KEY_SUFFIX_UNCONFIRMED, filter);
+  return setRedisKeyJSON(key, events);
 }
 
-export function setRedisOrphanEvents(events) {
-  return setRedisKeyJSON(`${KEY_SUFFIX_ORPHANED}`, events);
+export function getRedisOrphanedEvents(filter) {
+  const key = makeKey(KEY_SUFFIX_ORPHANED, filter);
+  return getRedisKeyJSON(key);
 }
 
-export function getRedisLastState() {
-  return getRedisKeyJSON(`${KEY_SUFFIX_LAST_STATE}`);
+export function setRedisOrphanedEvents(filter, events) {
+  const key = makeKey(KEY_SUFFIX_ORPHANED, filter);
+  return setRedisKeyJSON(key, events);
 }
 
-export function setRedisLastState(state) {
-  return setRedisKeyJSON(`${KEY_SUFFIX_LAST_STATE}`, state);
+export function getRedisLastState(filter) {
+  const key = makeKey(KEY_SUFFIX_LAST_STATE, filter);
+  return getRedisKeyJSON(key);
+}
+
+export function setRedisLastState(filter, state) {
+  const key = makeKey(KEY_SUFFIX_LAST_STATE, filter);
+  return setRedisKeyJSON(key, state);
 }
 
 export const clearRedis = _clearRedis; // In TS we will do `export clearRedis from './client`

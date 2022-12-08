@@ -5,12 +5,14 @@ import { getResponse, fetchWithRetry, postData } from './http.js';
 const CLASS_NAME = 'ChainwebCutService'
 
 export default class ChainwebCutService {
+  lastCut;
+  lastUpdateTime;
+  running = false;
+
   _config;
   _updateInterval;
   _intervalId;
   _updateCallbacks = new Set();
-  lastCut;
-  running = false;
 
   constructor(config = defaultConfig) {
     const { chainwebHost, network, updateInterval = 30_000 } = config;
@@ -21,7 +23,7 @@ export default class ChainwebCutService {
     this._updateInterval = updateInterval;
   }
 
-  start() {
+  async start() {
     if (this._intervalId) {
       throw new Error(`${CLASS_NAME}.start() called but it was already running`);
     }
@@ -30,7 +32,7 @@ export default class ChainwebCutService {
     // (that was we would factor delays in getting upstream data into our update timings)
     // OTOH this should be quick usually
     this._intervalId = setInterval(() => this._step(), this._updateInterval);
-    this._step();
+    await this._step();
     console.log(`${CLASS_NAME} started`);
   }
 
@@ -79,6 +81,7 @@ export default class ChainwebCutService {
     // depends if this.lastCut is going to be used externally
     try {
       this.lastCut = await this._getCut();
+      this.lastUpdateTime = Date.now();
       // should we register errorCallbacks in case getCut fails despite retries?
     } catch(e) {
       console.warn(`${CLASS_NAME} could not get cut: ${e.message}`);
@@ -96,5 +99,3 @@ export default class ChainwebCutService {
     return response;
   }
 }
-
-debugger;

@@ -29,7 +29,7 @@ export async function getBlockHeaderBranch({ chain, hash, height, limit = 10 }) 
   }
   const cacheKey = makeBlockHeaderCacheKey(chain, hash, height);
   if (blockHeaderCache[cacheKey]) {
-    console.error('Returning cached block headers', cacheKey);
+    // console.error('Returning cached block headers', cacheKey);
     return blockHeaderCache[cacheKey];
   }
   const rawRes = await postData(

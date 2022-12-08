@@ -1,10 +1,8 @@
 import SSE from 'express-sse';
 import { config } from '../../config/index.js';
 import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
-import { syncEventsFromChainWebData } from './service.js';
 import { getChainwebCut } from './chainweb-node.js';
-import { getPreviousEventHeight, sleep } from './utils.js';
-import { getRedisConfirmedEvents, setRedisOrphanEvents, getRedisOrphanEvents } from './redis/index.js';
+import ChainwebEventService from './chainweb-event.js';
 
 // get latest data from db if needed
 
@@ -21,36 +19,58 @@ import { getRedisConfirmedEvents, setRedisOrphanEvents, getRedisOrphanEvents } f
  */
 export let lowestOrphanBlockheight;
 export let highestNonOrphanBlockheight = 0;
-export let continueStreaming = true;
+export let continueStreaming = false; // TODO 
 
 let prevEventHeight = 0;
+const { defaultFilter } = config;
 
-const kdaEventsR = await getRedisConfirmedEvents();
-const orphanEventsR = await getRedisOrphanEvents();
+const kdaEventsR = { kda: 'events' }; // await getRedisConfirmedEvents(defaultFilter);
+const orphanEventsR = { kda: 'orphans' }; // await getRedisOrphanEvents(defaultFilter);
+
+const cwEvents = new ChainwebEventService({ filter: defaultFilter });
+
+await cwEvents.start();
 
 export const sse = new SSE(
-  { kdaEvents: kdaEventsR, orphans: orphanEventsR },
+  { events: cwEvents.getConfirmedEvents(), },
   { initialEvent: 'k:init' },
 );
+
+// changes:
+//
+// don't recalculate each time - keep state
+//  - currentCut
+//  - unconfirmed
+//  - confirmed
+//  - orphaned
+//
+// when sync, fetch from cw-data until bottom of unconfirmed (?)
+//
+
+/*
+ * isBlockOrphaned()
+ */
+
+
 
 const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
   let newKdaEvents = [];
   const orphanKeyMap = {};
 
   try {
-    const marmaladeEvents = await syncEventsFromChainWebData(
-      'marmalade.',
-      100,
-      4,
-      true,
-      config.moduleHashBlacklist,
-    );
+    const marmaladeEvents = await syncEventsFromChainwebData({
+      filter: 'marmalade.',
+      limit: 100,
+      threads: 4,
+      newestToOldest: true,
+      moduleBlacklist: config.moduleHashBlacklist,
+    });
 
     if (prevKdaEvents.length === 0) {
       newKdaEvents = marmaladeEvents;
     }
 
-    const orphanEventsR = await getRedisOrphanEvents();
+    const orphanEventsR = await getRedisOrphanEvents(defaultFilter);
     prevEventHeight = getPreviousEventHeight(prevKdaEvents, prevEventHeight);
 
     for (let index = 0; index < marmaladeEvents.length; index++) {
@@ -115,7 +135,7 @@ export const updateClient = async (prevKdaEvents, chainwebCut) => {
       await setRedisOrphanEvents(JSON.stringify(orphanlessKdaEvents));
     }
 
-    let orphansList = await getRedisOrphanEvents();
+    let orphansList = await getRedisOrphanEvents(defaultFilter);
     if (orphansList.length > 0 || Object.keys(orphanKeyMap).length > 0) {
       orphansList = { ...orphansList, ...orphanKeyMap };
       await setRedisOrphanEvents(JSON.stringify(orphansList));
@@ -131,12 +151,13 @@ export const updateClient = async (prevKdaEvents, chainwebCut) => {
 
 const startStreamingUpdates = async () => {
   while (continueStreaming) {
-    const kdaEventsR = await getRedisConfirmedEvents();
+    console.log("Starting update loop");
+    const kdaEventsR = await getRedisConfirmedEvents(defaultFilter);
     const chainwebCut = await getChainwebCut();
 
     await updateClient(kdaEventsR, chainwebCut);
-
-    await new Promise((r) => setTimeout(r, 60000));
+    console.log("Update loop finished");
+    await sleep(60_000);
   }
 
   return { message: 'Streaming stopped' };

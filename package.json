@@ -13,7 +13,7 @@
     "start": "node ./index.js",
     "dev": "nodemon ./index.js",
     "lint": "npx eslint ./src",
-    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand .",
+    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --silent .",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
     "test:watch": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --watch ."
   },

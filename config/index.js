@@ -28,6 +28,7 @@ const DEFAULT_KEYS = {
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
   REDIS_PASSWORD: ['redisPassword', ''],
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
+  DEFAULT_FILTER: ['defaultFilter', 'marmalade.'],
 }
 
 /*
@@ -42,7 +43,7 @@ const NUMERIC_KEYS = [
 /*
  * Default config includes module hash blacklist for now
  */
-export const config = {
+export const config = { // TODO default export ? 
   moduleHashBlacklist: [
     'LKQj2snGFz7Y8iyYlSm3uIomEAYb0C9zXCkTIPtzkPU',
     'F7tD1QlT8dx8BGyyq-h22OECYS7C3FfcYaRyxt6D1YQ',

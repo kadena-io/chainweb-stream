@@ -1,51 +1,95 @@
 import { writeFileSync } from 'fs';
-import every from 'lodash/every.js';
-import { filterBlackListItems, sortEvents } from './utils.js';
 import fetch, { Headers } from 'node-fetch';
+import every from 'lodash/every.js';
+import defaults from 'lodash/defaults.js';
+import { filterBlackListItems, sortEvents } from './utils.js';
 import { config } from '../../config/index.js';
 import { fetchWithRetry, postData, getResponse } from './http.js';
-import { getChainWebDataEvents } from './chainweb-data.js';
+import { getChainwebDataEvents } from './chainweb-data.js';
+import ChainwebCutService from './chainweb-cut.js';
 
 const { chainwebHost, dataHost, network } = config;
 
-export async function syncEventsFromChainWebData(
-  name,
-  limit = 50,
-  threads = 4,
-  newestToOldest = false,
-  moduleHashBlacklist = [],
-  totalLimit = 800,
-) {
-  let offset = 0;
-  let promisedResults = [];
-  let completedResults = [];
-  let continueSync = true;
 
-  while (continueSync) {
-    for (let i = 0; i < threads; i++) {
-      promisedResults.push(getChainWebDataEvents(name, offset, limit));
-      offset = offset + limit;
-    }
-    console.log('batch pushed, end offset', offset);
-    completedResults = await Promise.all(promisedResults);
-    debugger;
-    // once a batch comes back empty, we're caught up
-    continueSync = every(completedResults.map((v) => v.length >= limit)) &&
-      ( totalLimit > 0 ?
-        completedResults.reduce((total, results) => total + results.length, 0) <= totalLimit
-        : true );
-  }
+/*
+ * ChainwebEventService
+ *
+ * config:
+ *  - filter
+ *  - fromHeight
+ *
+ * .confirmed []
+ * .unconfirmed []
+ * .orphaned []
+ *
+ * ._lastHeight
+ *
+ * ._confirmedCallbacks Set
+ * ._orphanedCallbacks Set
+ * ._unconfirmedCallbacks Set
+ *
+ * constructor({ filter, fromHeight })
+ *  - this.filter
+ *  - this.lastHeight = fromHeight - 1
+ *
+ * init()
+ *  get data from DB
+ *    -> this.confirmed, orphaned
+ *    -> db.unconfirmed -> this.add
+ *
+ * start()
+ *  - init()
+ *  - this.cut = new CutService()
+ *  - this.cut.registerBlockCallback(this.blockStep)
+ *  - setTimeout(this.step, SERVICE_STEP_INTERVAL)
+ *    
+ * _dataStep()
+ *  try {
+ *    events = await CWData.fetchEvents({
+ *      fromHeight: this._lastHeight
+ *    });
+ *    for event of events:
+ *      this.add(event);
+ *  } catch {
+ *
+ *  } finally {
+ *    setTimeout(this.step, SERVICE_STEP_INTERVAL)
+ *  }
+ *
+ *  _blockStep()
+ *  - if this.unconfirmed
+ *    - foreach this.unconfirmed
+ *      - if cut diff > $CONFIRMATION_HEIGHT
+ *         -> isOrphanedBlock(header) ?
+ *          -> orphaned
+ *          -> confirmed
+ *
+ *  _add()
+ *    -> this._classifyEvent() 
+ *      -> this.addUnconfirmed
+ *      -> this.addConfirmed
+ *      -> this.addOrphaned
+ *
+ *  _classifyEvent(event) -> UNCONFIRMED | CONFIRMED | ORPHANED
+ *    -> inspect event.height vs this.cut[chain].height vs CONFIRMATION_HEIGHT
+ *      -> confirmationHeightPassed ? checkOrphaned
+ *        -> UNCONFIRMED
+ *        -> CONFIRMED
+ *        -> ORPHANED
+ *
+ *  _addConfirmed()
+ *
+ *  _addUnconfirmed()
+ *
+ *  _addOrphaned()
+ *
+ */
 
-  console.log('sync fetch finished');
-
-  completedResults = filterBlackListItems(completedResults, moduleHashBlacklist);
-
-  sortEvents(completedResults, newestToOldest);
-
-  console.log('sync finished', completedResults.length);
-
-  writeFileSync('sync-event-data.json', JSON.stringify(completedResults));
-
-  return completedResults;
-}
-
+/*
+ * formerly in init:
+ *    for all unconfirmed:
+ *      - wait until $CONFIRMATION_ROUND elapsed
+ *      - isBlockOrphaned()
+ *        -> save orphaned
+ *        -> move confirmed
+ */
