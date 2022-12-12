@@ -31,8 +31,10 @@ const DEFAULT_KEYS = {
   REDIS_PASSWORD: ['redisPassword', ''],
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
   DEFAULT_FILTER: ['defaultFilter', 'marmalade.'],
-  LOG: ['log', 'verbose'] // TODO change before prod
-}
+  LOG: ['log', 'verbose'], // TODO change before prod
+  CONFIRMATION_HEIGHT: ['confirmationHeight', 6],
+  EVENTS_STEP_INTERVAL: ['eventsStepInterval', 30_000],
+};
 
 /*
  * Cast & enforce numeric for these keys
@@ -41,6 +43,8 @@ const NUMERIC_KEYS = [
   'port',
   'httpRetryBackoffStep',
   'httpMaxRetries',
+  'confirmationHeight',
+  'eventsStepInterval',
 ];
 
 /*

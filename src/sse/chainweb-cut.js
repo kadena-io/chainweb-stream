@@ -1,6 +1,6 @@
 import Logger from './logger.js';
 import { config as defaultConfig } from '../../config/index.js';
-import { validateDefined, validateType } from './utils.js';
+import { validateDefined, validateType } from './types.js';
 import { getResponse, fetchWithRetry, postData } from './http.js';
 
 const CLASS_NAME = 'ChainwebCutService'

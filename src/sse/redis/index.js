@@ -7,7 +7,7 @@ import {
   KEY_SUFFIX_ORPHANED,
   KEY_SUFFIX_LAST_STATE,
 } from './client.js';
-import { validateType } from '../utils.js';
+import { validateType } from '../types.js';
 
 function makeKey(base, suffix) {
   validateType('REDIS', 'filter', suffix, 'string');

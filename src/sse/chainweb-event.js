@@ -1,5 +1,9 @@
 import Logger from './logger.js';
-import { validateDefined, validateType } from './utils.js';
+import {
+  validateDefined,
+  validateType,
+  validateBlockPermanence,
+} from './types.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { syncEventsFromChainwebData } from './chainweb-data.js';
 import { config } from '../../config/index.js';
@@ -12,25 +16,17 @@ import {
   setRedisOrphanedEvents,
 } from './redis/index.js';
 
-const CONFIRMATION_HEIGHT = 6; // TODO in config
-const DATA_STEP_INTERVAL = 15_000; // TODO in config
-const SERVICE_STEP_INTERVAL = 30_000;
-
 const CLASS_NAME = 'ChainwebEventService'
 
-const EVENT_TYPES = ['confirmed', 'unconfirmed', 'orphaned'];
+const {
+  moduleHashBlacklist,
+  confirmationHeight: CONFIRMATION_HEIGHT,
+  eventsStepInterval: EVENTS_STEP_INTERVAL,
+} = config;
 
-const { moduleHashBlacklist } = config;
-
-function validateEventType(eventType) {
-  if (!EVENT_TYPES.includes(eventType)) {
-    throw new Error(`Expected one of [${EVENT_TYPES.join(', ')}] but received ${eventType}`);
-  }
-}
-
-function eventTypeToCallbackSet(eventType) {
-  validateEventType(eventType);
-  return `_${eventType}Callbacks`;
+function blockPermanenceToCallbackSet(blockPermanence) {
+  validateBlockPermanence(blockPermanence);
+  return `_${blockPermanence}Callbacks`;
 }
 
 function heightSorter(a, b) {
@@ -160,7 +156,7 @@ export default class ChainwebEventService {
     } catch(e) {
       this.logger.error(e);
     }
-    setTimeout(this._step, DATA_STEP_INTERVAL);
+    setTimeout(this._step, EVENTS_STEP_INTERVAL);
   }
 
   stop() {
@@ -244,7 +240,7 @@ export default class ChainwebEventService {
     } catch(e) {
       this.logger.error(e);
     } finally {
-      setTimeout(this._step, SERVICE_STEP_INTERVAL)
+      setTimeout(this._step, EVENTS_STEP_INTERVAL)
     }
   }
   
@@ -294,14 +290,14 @@ export default class ChainwebEventService {
 
   async _add(event) {
     const classification = await this._classifyEvent(event);
-    validateEventType(classification);
+    validateBlockPermanence(classification);
     if (this._eventExists(event)) {
       this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${classification}, not notifying`);
       return
     }
     this[classification].push(event) // TODO change this to push in-place (sorted)
     // call callbacks
-    const callbackSet = eventTypeToCallbackSet(classification);
+    const callbackSet = blockPermanenceToCallbackSet(classification);
     this._executeCallbacks(this[callbackSet], event);
   }
 
@@ -329,13 +325,13 @@ export default class ChainwebEventService {
 
   _on(type, callback) {
     validateType(CLASS_NAME, 'callback', callback, 'function');
-    const set = eventTypeToCallbackSet(type);
+    const set = blockPermanenceToCallbackSet(type);
     this[set].add(callback);
   }
 
   _off(type, callback) {
     validateType(CLASS_NAME, 'callback', callback, 'function');
-    const set = eventTypeToCallbackSet(type);
+    const set = blockPermanenceToCallbackSet(type);
     this[set].delete(callback);
   }
 
