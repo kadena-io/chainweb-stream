@@ -1,3 +1,4 @@
+import Logger from './logger.js';
 import { config as defaultConfig } from '../../config/index.js';
 import { validateDefined, validateType } from './utils.js';
 import { getResponse, fetchWithRetry, postData } from './http.js';
@@ -15,6 +16,7 @@ export default class ChainwebCutService {
   _updateCallbacks = new Set();
 
   constructor(config = defaultConfig) {
+    this.logger = new Logger('CutService');
     const { chainwebHost, network, updateInterval = 30_000 } = config;
     validateDefined(CLASS_NAME, 'chainwebHost', chainwebHost);
     validateDefined(CLASS_NAME, 'network', network);
@@ -33,7 +35,7 @@ export default class ChainwebCutService {
     // OTOH this should be quick usually
     this._intervalId = setInterval(() => this._step(), this._updateInterval);
     await this._step();
-    console.log(`${CLASS_NAME} started`);
+    this.logger.verbose('Started');
   }
 
   stop() {
@@ -43,7 +45,7 @@ export default class ChainwebCutService {
     this.running = false;
     clearInterval(this._intervalId);
     this._intervalId = undefined;
-    console.log(`${CLASS_NAME} stopped`);
+    this.logger.verbose('Stopped');
   }
 
   registerUpdateCallback(fn) {
@@ -57,7 +59,7 @@ export default class ChainwebCutService {
       this._updateCallbacks.delete(fn);
       return;
     }
-    console.warn('Unregistering callback: not found; ignoring');
+    this.logger.warn('Unregistering callback: not found; ignoring');
   }
 
   async _executeCallbacks(data = this.lastCut) {
@@ -71,7 +73,7 @@ export default class ChainwebCutService {
           await res; 
         }
       } catch(e) {
-        console.warn(`${CLASS_NAME} updateCallback error: ${e.message}`);
+        this.logger.warn(`${CLASS_NAME} updateCallback error: ${e.message}`);
       }
     }
   }
@@ -84,7 +86,7 @@ export default class ChainwebCutService {
       this.lastUpdateTime = Date.now();
       // should we register errorCallbacks in case getCut fails despite retries?
     } catch(e) {
-      console.warn(`${CLASS_NAME} could not get cut: ${e.message}`);
+      this.logger.warn(`Could not get cut: ${e.message}`);
       return;
     }
     this._executeCallbacks(this.lastCut);
@@ -93,7 +95,7 @@ export default class ChainwebCutService {
   async _getCut() {
     const { chainwebHost, network } = this._config;
     const url = `https://${chainwebHost}/chainweb/0.0/${network}/cut`;
-    const rawResponse = await fetchWithRetry(url);
+    const rawResponse = await fetchWithRetry(url, { logger: this.logger });
     const response = await getResponse(rawResponse);
     // const summary = summarizeChainwebCut(response);
     return response;

@@ -6,6 +6,7 @@ import { config } from '../../config/index.js';
 export const router = express.Router();
 
 router.get('/stream', sse.init);
+
 router.get('/status', async (request, response) => {
   const kdaEvents = await getRedisConfirmedEvents(config.defaultFilter);
   response.json({ kdaEvents });

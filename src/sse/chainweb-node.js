@@ -22,7 +22,7 @@ function makeBlockHeaderCacheKey(chain, hash, height) {
   return `${chain}:${height}:${hash}`
 }
 
-export async function getBlockHeaderBranch({ chain, hash, height, limit = 10 }) {
+export async function getBlockHeaderBranch({ chain, hash, height, limit = 10, logger = console }) {
   if (!hash) {
     const cut = await getChainwebCut();
     hash = cut.hashes[chain].hash;
@@ -35,10 +35,12 @@ export async function getBlockHeaderBranch({ chain, hash, height, limit = 10 }) 
   const rawRes = await postData(
     `https://${chainwebHost}/chainweb/0.0/${network}/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
     { lower: [], upper: [hash] },
+    logger,
   );
 
   const response = await getResponse(rawRes);
-  console.log(`Block Header req c=${chain} height=${height} hash=${hash} got ${JSON.stringify(response)}`);
+  // TODO logger here
+  logger.debug(`Block Header req c=${chain} height=${height} hash=${hash} got ${JSON.stringify(response)}`);
   blockHeaderCache[cacheKey] = response;
 
   return response;

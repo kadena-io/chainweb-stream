@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
@@ -21,9 +20,7 @@ app.use(router);
 
 const server = http.createServer(app);
 
-console.log(port);
-
 server.listen(port, () => {
   startStreaming();
-  console.log(`KDA Events service (${config.network}) listening at http://localhost:${port} - ${new Date().toString()}`);
+  console.log(`KDA Events service (${config.network}) listening at http://localhost:${port}`);
 });

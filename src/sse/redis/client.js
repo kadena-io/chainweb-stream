@@ -1,3 +1,4 @@
+import Logger from '../logger.js';
 import defaults from 'lodash/defaults.js';
 import { config as defaultConfig } from '../../../config/index.js';
 import { withRetries } from '../utils.js';
@@ -22,6 +23,8 @@ const RESET_STATE = '';
 let client;
 let network;
 
+const logger = new Logger('Redis');
+
 export async function connect(runtimeConfig) {
   const config = defaults(runtimeConfig, defaultConfig);
   const { redisPassword } = config;
@@ -32,11 +35,11 @@ export async function connect(runtimeConfig) {
     socket: {
       reconnectStrategy: n => {
         if (n >= MAX_REDIS_FAILURES) {
-          console.error('FATAL Too many redis connection failures');
+          logger.error('FATAL Too many redis connection failures');
           process.exit(1);
         }
         const timeout = Math.pow(n + 1, 2) * 1000; // n^s sec. -- 1, 4, 9, 16, etc
-        console.warn(`Retrying after ${timeout} ms`);
+        logger.warn(`Retrying after ${timeout} ms`);
         return timeout;
       }
     },
@@ -51,14 +54,14 @@ export async function connect(runtimeConfig) {
       const client = createClient(redisOptions);
       await client.connect();
       return client;
-    });
+    }, { logger });
   } catch(e) {
     // No network or no redis: FATAL
-    console.error(e);
-    console.error(e.message);
+    logger.error(e);
+    logger.error(e.message);
     process.exit(1);
   }
-  client.on('error', (err) => console.error('Redis Client Error', err));
+  client.on('error', (err) => logger.error('Redis Client Error', err));
 }
 
 export async function destroyClient() {
@@ -67,7 +70,7 @@ export async function destroyClient() {
       await client.disconnect(); // TODO quit is also available, what's the diff?
     }
   } catch(e) {
-    console.error('Ignorable error while disconnecting from redis', e.message);
+    logger.warn('Ignorable error while disconnecting from redis', e.message);
   }
   client = undefined;
 }
@@ -79,12 +82,12 @@ export async function getRedisKeyJSON(key, defaultValue = []) {
   if (!key.startsWith(network)) {
     key = `${network}:${key}`;
   }
-  const value = await withRetries(() => client.get(key));
+  const value = await withRetries(() => client.get(key), { logger });
   try {
     return JSON.parse(value) ?? defaultValue;
   } catch(e) {
-    console.warn(`Failed to parse ${key} as JSON: ${e.message}`);
-    console.warn(`Value starts with: ${value?.slice(0, 64)}`);
+    logger.warn(`Failed to parse ${key} as JSON: ${e.message}`);
+    logger.warn(`Value starts with: ${value?.slice(0, 64)}`);
   }
   return defaultValue
 }
@@ -99,8 +102,8 @@ export async function setRedisKeyJSON(key, value) {
   if (value && typeof value === "object") {
     value = JSON.stringify(value);
   }
-  console.warn('Writing', key, value?.length);
-  await withRetries(() => client.set(key, value));
+  logger.verbose('Writing', key, value?.length);
+  await withRetries(() => client.set(key, value), { logger });
   return value;
 }
 

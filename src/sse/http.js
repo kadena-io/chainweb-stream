@@ -4,9 +4,12 @@ import { sleep } from './utils.js';
 
 const { httpMaxRetries, httpRetryBackoffStep } = config;
 
-export async function fetchWithRetry(url, opts = undefined, tries = 0) {
+export async function fetchWithRetry(url, opts = {}, tries = 0) {
+  const { logger = console, ...fetchOpts } = opts ?? {};
   try {
-    const res = await fetch(url, opts);
+    const method = opts?.method ?? 'GET';
+    logger.debug(`${method} ${url} [Retries: ${tries}]`);
+    const res = await fetch(url, fetchOpts);
     if (res.status >= 500) {
       const text = await res.text();
       throw text;
@@ -15,23 +18,21 @@ export async function fetchWithRetry(url, opts = undefined, tries = 0) {
   } catch(e) {
     tries++;
     if (tries >= httpMaxRetries) {
-      console.error(`Caught ${e.message} - Retries exhausted\n${e.stack}`);
+      logger.error(`Caught ${e.message} - Retries exhausted\n${e.stack}`);
       throw e;
     }
     const timeout = httpRetryBackoffStep * Math.pow(tries, 2); // defaults 2*n^2 -- 2s, 8s, 18s, 32s, 50s, ...
-    console.error(`Caught ${e.message}\nRetrying after ${timeout}ms`);
+    logger.warn(`Caught ${e.message}\nRetrying after ${timeout}ms`);
     await sleep(timeout);
     return fetchWithRetry(url, opts, tries);
   }
 }
 
-export async function postData(url = '', data = {}, tries = 0) {
+export async function postData(url = '', data = {}, logger = console) {
   const headers = new Headers({
     'Content-Type': 'application/json',
     accept: 'application/json;blockheader-encoding=object',
   });
-
-  console.error(`Posting to ${url} ${JSON.stringify(data)}`);
 
   const response = await fetchWithRetry(url, {
     method: 'POST',
@@ -41,6 +42,7 @@ export async function postData(url = '', data = {}, tries = 0) {
     redirect: 'follow',
     referrerPolicy: 'no-referrer',
     body: JSON.stringify(data),
+    logger,
   });
 
   return response;

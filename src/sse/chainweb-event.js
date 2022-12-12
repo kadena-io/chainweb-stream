@@ -1,3 +1,4 @@
+import Logger from './logger.js';
 import { validateDefined, validateType } from './utils.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { syncEventsFromChainwebData } from './chainweb-data.js';
@@ -6,6 +7,9 @@ import {
   getRedisUnconfirmedEvents,
   getRedisConfirmedEvents,
   getRedisOrphanedEvents,
+  setRedisUnconfirmedEvents,
+  setRedisConfirmedEvents,
+  setRedisOrphanedEvents,
 } from './redis/index.js';
 
 const CONFIRMATION_HEIGHT = 6; // TODO in config
@@ -28,7 +32,6 @@ function eventTypeToCallbackSet(eventType) {
   validateEventType(eventType);
   return `_${eventType}Callbacks`;
 }
-
 
 function heightSorter(a, b) {
   // sort high to low heights
@@ -80,6 +83,8 @@ export default class ChainwebEventService {
   _orphanedCallbacks = new Set()
 
   constructor({ filter, minHeight, cut }) {
+    this.logger = new Logger('EventService', filter);
+
     validateType(CLASS_NAME, 'filter', filter, 'string');
     this._filter = filter;
 
@@ -89,6 +94,7 @@ export default class ChainwebEventService {
     }
     this._lastHeight = minHeight ? Math.max(0, minHeight - 1) : 0;
 
+    this.logger.verbose(`Started with lastHeight=${this._lastHeight} and${!cut?' no ':' '}Cut Service`);
     if (cut) {
       validateInstanceOf(CLASS_NAME, 'cut', cut, ChainwebCutService);
       this._cut = cut;
@@ -152,7 +158,7 @@ export default class ChainwebEventService {
     try {
       await this._step();
     } catch(e) {
-      console.error(e);
+      this.logger.error(e);
     }
     setTimeout(this._step, DATA_STEP_INTERVAL);
   }
@@ -180,6 +186,19 @@ export default class ChainwebEventService {
     this.unconfirmed = unconfirmed ?? [];
     this.confirmed = confirmed ?? [];
     this.orphaned = orphaned ?? [];
+    // TODO lastHeight
+    debugger;
+  }
+
+  /*
+   *  Save state to redis
+   */
+  async _saveState() {
+    await Promise.all([
+      setRedisConfirmedEvents(this._filter, this.confirmed),
+      setRedisUnconfirmedEvents(this._filter, this.unconfirmed),
+      setRedisOrphanedEvents(this._filter, this.orphaned),
+    ]);
   }
 
   _step = async () => {
@@ -193,13 +212,15 @@ export default class ChainwebEventService {
         threads: 4,
         newestToOldest: true,
         moduleHashBlacklist,
+        logger: this.logger,
       });
       this.lastUpdateTime = Date.now();
       for(const event of events) {
         await this._add(event);
       }
+      await this._saveState();
     } catch(e) {
-      console.error(e);
+      this.logger.error(e);
     } finally {
       setTimeout(this._step, SERVICE_STEP_INTERVAL)
     }
@@ -222,7 +243,7 @@ export default class ChainwebEventService {
     const classification = await this._classifyEvent(event);
     validateEventType(classification);
     if (this[classification].includes(event)) {
-      console.warn('Event already in ${classification}, not notifying');
+      this.logger.warn('Event already in ${classification}, not notifying');
       return
     }
     this[classification].push(event) // should we unshift instead? what is the preferable order
@@ -275,7 +296,7 @@ export default class ChainwebEventService {
           await res; 
         }
       } catch(e) {
-        console.warn(`${CLASS_NAME} updateCallback error: ${e.message}`);
+        this.logger.warn(`${CLASS_NAME} updateCallback error: ${e.message}`);
       }
     }
   }

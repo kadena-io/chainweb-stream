@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 /*
  * Helpers
  */
@@ -29,6 +31,7 @@ const DEFAULT_KEYS = {
   REDIS_PASSWORD: ['redisPassword', ''],
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
   DEFAULT_FILTER: ['defaultFilter', 'marmalade.'],
+  LOG: ['log', 'verbose'] // TODO change before prod
 }
 
 /*

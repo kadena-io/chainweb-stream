@@ -4,7 +4,6 @@ import every from 'lodash/every.js';
 import defaults from 'lodash/defaults.js';
 import { filterBlackListItems, sortEvents } from './utils.js';
 import { config } from '../../config/index.js';
-import { fetchWithRetry, postData, getResponse } from './http.js';
 import { getChainwebDataEvents } from './chainweb-data.js';
 import ChainwebCutService from './chainweb-cut.js';
 
