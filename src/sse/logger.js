@@ -1,6 +1,8 @@
 import { config } from '../../config/index.js';
 import npmlog from 'npmlog';
 
+const loggerPrefix = '[Logger]';
+
 // default log level: verbose
 npmlog.level = 'verbose';
 
@@ -23,14 +25,14 @@ if (config.log) {
   if (logLevelMappings[config.log]) {
     npmlog.level = config.log;
   } else {
-    npmlog.warn('[LOGGER]', `Unknown log level: ${config.log}`);
+    npmlog.warn(loggerPrefix, `Unknown log level: ${config.log}`);
   }
 }
 
 reportLogLevel();
 
 function reportLogLevel() {
-  npmlog.info('[LOGGER]', `Using log level: ${npmlog.level}`);
+  npmlog.info(loggerPrefix, `Using log level: ${npmlog.level}`);
 }
 
 export function setLevel(newLevel) {

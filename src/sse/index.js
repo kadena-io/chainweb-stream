@@ -32,7 +32,7 @@ const cwEvents = new ChainwebEventService({ filter: defaultFilter });
 await cwEvents.start();
 
 export const sse = new SSE(
-  { events: cwEvents.getConfirmedEvents(), },
+  { events: cwEvents.state.getConfirmedEvents(), },
   { initialEvent: 'k:init' },
 );
 

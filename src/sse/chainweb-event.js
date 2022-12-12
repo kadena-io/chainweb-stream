@@ -7,14 +7,7 @@ import {
 import ChainwebCutService from './chainweb-cut.js';
 import { syncEventsFromChainwebData } from './chainweb-data.js';
 import { config } from '../../config/index.js';
-import {
-  getRedisUnconfirmedEvents,
-  getRedisConfirmedEvents,
-  getRedisOrphanedEvents,
-  setRedisUnconfirmedEvents,
-  setRedisConfirmedEvents,
-  setRedisOrphanedEvents,
-} from './redis/index.js';
+import State from './chainweb-event-state.js';
 
 const CLASS_NAME = 'ChainwebEventService'
 
@@ -29,47 +22,14 @@ function blockPermanenceToCallbackSet(blockPermanence) {
   return `_${blockPermanence}Callbacks`;
 }
 
-function heightSorter(a, b) {
-  // sort high to low heights
-  return a.height < b.height ? 1 : -1;
-}
-
-function presentEvents(sources, options) {
-  const { minHeight, maxHeight, limit } = options;
-
-  const filterPredicates = [];
-  if (minHeight) {
-    filterPredicates.push(event => event.height >= minHeight);
-  }
-  if (maxHeight) {
-    filterPredicates.push(event => event.height <= maxHeight);
-  }
-
-  const output = sources.reduce((out, arr) => {
-    if (filterPredicates.length) {
-      arr = arr.filter(event => filterPredicates.every(pred => pred(event)));
-    }
-    return out.concat(arr);
-  }, []);
-
-  if (options.sort) {
-    output.sort(heightSorter);
-  }
-  return options.limit ? output.slice(0, limit) : output;
-}
-
 export default class ChainwebEventService {
-  // events: unconfirmed, confirmed, orphaned
-  unconfirmed = []
-  confirmed = []
-  orphaned = []
+  state;              // contains events[]: unconfirmed, confirmed, orphaned
 
-  running = false    // running state
+  running = false     // running state
   lastUpdateTime;
 
   _filter = null      // chainweb-data filter for this service, e.g "marmalade." or "coin."
-  _minHeight = null  // initial min height setting
-  _lastHeight = null  // last seen height
+  _minHeight = null  // last seen height
 
   _cut                // ChainwebCut service
 
@@ -79,69 +39,24 @@ export default class ChainwebEventService {
   _orphanedCallbacks = new Set()
 
   constructor({ filter, minHeight, cut }) {
-    this.logger = new Logger('EventService', filter);
+    const logPrefix = filter.endsWith('.') ? filter.slice(0, filter.length - 1) : filter;
+    this.logger = new Logger('EventService', logPrefix);
 
     validateType(CLASS_NAME, 'filter', filter, 'string');
     this._filter = filter;
+    this.state = new State({ filter });
 
     if (minHeight) {
       validateType(CLASS_NAME, 'minHeight', minHeight, 'number');
-      this._minHeight = minHeight;
     }
-    this._lastHeight = minHeight ? Math.max(0, minHeight - 1) : 0;
+    this._minHeight = minHeight ?? 0;
 
-    this.logger.verbose(`Started with lastHeight=${this._lastHeight} and${!cut?' no ':' '}Cut Service`);
     if (cut) {
       validateInstanceOf(CLASS_NAME, 'cut', cut, ChainwebCutService);
       this._cut = cut;
     } else {
       this._cut = new ChainwebCutService();
     }
-  }
-
-  registerConfirmedCallback(callback) {
-    return this._on('confirmed', callback);
-  }
-
-  unregisterConfirmedCallback(callback) {
-    return this._off('confirmed', callback);
-  }
-
-  registerUnconfirmedCallback(callback) {
-    return this._on('unconfirmed', callback);
-  }
-
-  unregisterUnconfirmedCallback(callback) {
-    return this._off('unconfirmed', callback);
-  }
-
-  registerOrphanedCallback(callback) {
-    return this._on('orphaned', callback);
-  }
-
-  unregisterOrphanedCallback(callback) {
-    return this._off('orphaned', callback);
-  }
-
-  getAllEvents({ minHeight, maxHeight, limit } = {}) {
-    return presentEvents(
-      [this.unconfirmed, this.confirmed, this.orphaned],
-      { minHeight, maxHeight, limit, sort: true },
-    );
-  }
-
-  getConfirmedEvents({ minHeight, maxHeight, limit } = {}) {
-    return presentEvents(
-      [this.confirmed],
-      { minHeight, maxHeight, limit, sort: false },
-    );
-  }
-
-  getOrphanedEvents({ minHeight, maxHeight, limit } = {}) {
-    return presentEvents(
-      [this.orphaned],
-      { minHeight, maxHeight, limit, sort: false },
-    );
   }
 
   async start() {
@@ -151,6 +66,7 @@ export default class ChainwebEventService {
     if (!this._cut.running) {
       await this._cut.start();
     }
+    this.logger.verbose(`Started with minHeight=${this._minHeight}`);
     try {
       await this._step();
     } catch(e) {
@@ -166,54 +82,55 @@ export default class ChainwebEventService {
     }
   }
 
-  /*
-   *  Fetch previous state from redis
-   */
-  async _loadState() {
-    const [
-      unconfirmed,
-      confirmed,
-      orphaned,
-    ] = await Promise.all([
-      getRedisConfirmedEvents(this._filter),
-      getRedisUnconfirmedEvents(this._filter),
-      getRedisOrphanedEvents(this._filter),
-    ]);
-    this.unconfirmed = unconfirmed ?? [];
-    this.confirmed = confirmed ?? [];
-    this.orphaned = orphaned ?? [];
-    this._calcLastHeight();
-    // TODO lastHeight improve?
-    this.logger.info(`Loaded state lastHeight=${this._lastHeight} confirmed=${confirmed.length} unconfirmed=${unconfirmed.length} orphaned=${orphaned.length}`);
+  on(type, callback) {
+    validateType(CLASS_NAME, 'callback', callback, 'function');
+    const set = blockPermanenceToCallbackSet(type);
+    this[set].add(callback);
+  }
+
+  off(type, callback) {
+    validateType(CLASS_NAME, 'callback', callback, 'function');
+    const set = blockPermanenceToCallbackSet(type);
+    this[set].delete(callback);
   }
 
   /*
-   * Update lastHeight
+   * Private line
+   */
+
+  /*
+   * Update minHeight
    */
   async _calcLastHeight() {
     // TODO IMPORTANT there is an edge case here where
     // if chain=8 is +2 blocks ahead of chain=3
-    // we get an unconfirmed event from chain=8 and set lastHeight + 1
-    // we never see an event from chain=3 at lastHeight-1 or lastHeight
-    // maybe check lastHeight against confirmation height or Cut to see if we can move forward
+    // we get an unconfirmed event from chain=8 and set minHeight + 1
+    // we never see an event from chain=3 at minHeight-1 or minHeight
+    // maybe check minHeight against confirmation height or Cut to see if we can move forward
     // but that isn't a guarrantee that cw-data has actually caught up to that state
-    // we could always store lastSeenEvent - 2 as the lastHeight and de-dupe
-    const lastEvent = this.unconfirmed[0] ?? this.confirmed[0] ?? this.orphaned[0];
+    // we could always store lastSeenEvent - 2 as the minHeight and de-dupe
+    const lastEvent = this.state.unconfirmed[0] ?? this.state.confirmed[0] ?? this.state.orphaned[0];
     if (lastEvent) {
-      this._lastHeight = lastEvent.height + 1;
+      this._minHeight = lastEvent.height + 1;
     }
+  }
+
+  /*
+   *  Fetch previous state from redis
+   */
+  async _loadState() {
+    await this.state.load();
+    this._calcLastHeight();
+    // TODO minHeight improve?
+    this.logger.info(`Loaded state minHeight=${this._minHeight} ${this.state.summary}`);
   }
 
   /*
    *  Save state to redis
    */
   async _saveState() {
-    await Promise.all([
-      setRedisConfirmedEvents(this._filter, this.confirmed),
-      setRedisUnconfirmedEvents(this._filter, this.unconfirmed),
-      setRedisOrphanedEvents(this._filter, this.orphaned),
-    ]);
-    this.logger.info(`Saved state lastHeight=${this._lastHeight} confirmed=${this.confirmed.length} unconfirmed=${this.unconfirmed.length} orphaned=${this.orphaned.length}`);
+    await this.state.save();
+    this.logger.verbose(`Saved state minHeight=${this._minHeight} ${this.state.summary}`);
   }
 
   _step = async () => {
@@ -227,13 +144,14 @@ export default class ChainwebEventService {
         threads: 4,
         newestToOldest: true,
         moduleHashBlacklist,
-        minHeight: this._lastHeight,
+        minHeight: this._minHeight,
       }, this.logger);
       this.lastUpdateTime = Date.now();
+      let updated = 0;
       for(const event of events) {
-        await this._add(event);
+        updated += await this._add(event);
       }
-      if (events.length) {
+      if (updated) {
         this._calcLastHeight();
         await this._saveState();
       }
@@ -244,44 +162,13 @@ export default class ChainwebEventService {
     }
   }
   
-  _eventExists(needle, collection) {
-    if (!collection) {
-      return this._eventExists(needle, this.unconfirmed) ||
-        this._eventExists(needle, this.confirmed) ||
-        this._eventExists(needle, this.orphaned);
-    }
-    const { height, requestKey, blockHash } = needle;
-    let needleJson; // lazily create needle JSON - if needed only
-    for(const event of collection) {
-      if (event.height !== height || event.requestKey !== requestKey || event.blockHash !== blockHash) {
-        // return early if basic stuff is different - save us a JSON.stringify
-        continue;
-      }
-      if (event.height < height) {
-        // we went past the needle event height, we can stop scanning
-        // assumes collections are sorted(!)
-        break;
-      }
-      if (!needleJson) {
-        needleJson = JSON.stringify(needle);
-      }
-      // could figure out a better way to compare
-      // but essentially we need most attributes to find duplicates
-      // e.g. a safe transfer txn is 2x coin.TRANSFER w/ same everything except params
-      if (needleJson === JSON.stringify(event)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   _blockStep = async () => {
-    if (this.unconfirmed.length) {
-      for(const event of this.unconfirmed) {
-        const classification = await this._classifyEvent(event);
-        if (classification !== 'unconfirmed') {
-          const uncIdx = this.unconfirmed.indexOf(event);
-          this.unconfirmed.splice(uncIdx, 1);
+    if (this.state.unconfirmed.length) {
+      for(const event of this.state.unconfirmed) {
+        const permanence = await this._classifyEvent(event);
+        if (permanence !== 'unconfirmed') {
+          const uncIdx = this.state.unconfirmed.indexOf(event);
+          this.state.unconfirmed.splice(uncIdx, 1);
           this._add(event);
         }
       }
@@ -289,27 +176,18 @@ export default class ChainwebEventService {
   }
 
   async _add(event) {
-    const classification = await this._classifyEvent(event);
-    validateBlockPermanence(classification);
-    if (this._eventExists(event)) {
-      this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${classification}, not notifying`);
-      return
+    const permanence = await this._classifyEvent(event);
+    validateBlockPermanence(permanence);
+    if (this.state.eventExists(event)) {
+      this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${permanence}, not notifying`);
+      return 0;
     }
-    this[classification].push(event) // TODO change this to push in-place (sorted)
+    this.state.add(permanence, event);
     // call callbacks
-    const callbackSet = blockPermanenceToCallbackSet(classification);
+    const callbackSet = blockPermanenceToCallbackSet(permanence);
     this._executeCallbacks(this[callbackSet], event);
+    return 1;
   }
-
-/*
- *  _classifyEvent(event) -> UNCONFIRMED | CONFIRMED | ORPHANED
- *    -> inspect event.height vs this.cut[chain].height vs CONFIRMATION_HEIGHT
- *      -> confirmationHeightPassed ? checkOrphaned
- *        -> UNCONFIRMED
- *        -> CONFIRMED
- *        -> ORPHANED
- *
- */
 
   async _classifyEvent(event) {
     const { height, chain, blockHash } = event;
@@ -321,18 +199,6 @@ export default class ChainwebEventService {
     return 'confirmed'; // TODO
     // check orphaned
     // return confirmed
-  }
-
-  _on(type, callback) {
-    validateType(CLASS_NAME, 'callback', callback, 'function');
-    const set = blockPermanenceToCallbackSet(type);
-    this[set].add(callback);
-  }
-
-  _off(type, callback) {
-    validateType(CLASS_NAME, 'callback', callback, 'function');
-    const set = blockPermanenceToCallbackSet(type);
-    this[set].delete(callback);
   }
 
   async _executeCallbacks(callbackSet, data) {
