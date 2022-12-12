@@ -2,12 +2,17 @@ import defaults from 'lodash/defaults.js'
 import { fetchWithRetry, getResponse } from './http.js';
 import { config } from '../../config/index.js';
 import { filterBlackListItems, sortEvents } from './utils.js';
-import { writeFileSync } from 'fs';
 
 const { dataHost } = config;
 
-export async function getChainwebDataEvents(name, offset, limit = 50, logger) {
-  const url = `http://${dataHost}/txs/events\?name\=${name}\&limit\=${limit}\&offset\=${offset}`;
+export async function getChainwebDataEvents(name, minHeight, limit = 50, offset = 0, logger = console) {
+  const params = new URLSearchParams({
+    name,
+    minheight: minHeight,
+    limit,
+    offset,
+  });
+  const url = `http://${dataHost}/txs/events?${params}`;
 
   const rawRes = await fetchWithRetry(url, { logger });
 
@@ -22,10 +27,9 @@ const syncEventsFromChainwebDataDefaults = {
   newestToOldest: false,
   moduleHashBlacklist: [],
   // totalLimit: 399, // DEBUG for quicker results
-  logger: console,
 }
 
-export async function syncEventsFromChainwebData(opts) {
+export async function syncEventsFromChainwebData(opts, logger=console) {
   const {
     filter,
     limit,
@@ -33,8 +37,7 @@ export async function syncEventsFromChainwebData(opts) {
     newestToOldest,
     moduleHashBlacklist,
     totalLimit,
-    untilHeight,
-    logger,
+    minHeight,
   } = defaults(opts, syncEventsFromChainwebDataDefaults);
 
   let offset = 0;
@@ -42,9 +45,11 @@ export async function syncEventsFromChainwebData(opts) {
   let completedResults = [];
   let continueSync = true;
 
+  logger.debug(`syncEventsFromChainwebData minHeight=${minHeight}`);
+
   while (continueSync) {
     for (let i = 0; i < threads; i++) {
-      promisedResults.push(getChainwebDataEvents(filter, offset, limit, logger));
+      promisedResults.push(getChainwebDataEvents(filter, minHeight, limit, offset, logger));
       offset = offset + limit;
     }
     logger.verbose('batch pushed, end offset', offset);
@@ -61,8 +66,6 @@ export async function syncEventsFromChainwebData(opts) {
   sortEvents(completedResults, newestToOldest);
 
   logger.verbose('sync finished', completedResults.length);
-
-  writeFileSync('sync-event-data.json', JSON.stringify(completedResults));
 
   return completedResults;
 }

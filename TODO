@@ -1,4 +1,14 @@
 [v] LOGGER
 [ ] classify events
-[ ] SSE support more than marmalade
-[ ] CHECK sse updating init data?
+[ ] SSE support more filters, manage single Cut w/ multiple Event services
+  - when we have many filters we may need to throttle/schedule cw-data api calls globally
+
+[ ] CHECK sse updating init data proparly?
+
+-- Next
+
+[ ] refactor state our of ChainwebEventsService into its own class
+[ ] consider making an account updater, should work well with the account tracker
+[ ] tests
+[ ] typescript
+[ ] EventService .lastHeight race condition/optimization - or just use .lastHeight - (maxHeightSeen - 2) every time

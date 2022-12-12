@@ -8,7 +8,7 @@ export async function fetchWithRetry(url, opts = {}, tries = 0) {
   const { logger = console, ...fetchOpts } = opts ?? {};
   try {
     const method = opts?.method ?? 'GET';
-    logger.debug(`${method} ${url} [Retries: ${tries}]`);
+    logger.debug(`${method} ${url}${tries ? ` [Retries: ${tries}]` : ''}`);
     const res = await fetch(url, fetchOpts);
     if (res.status >= 500) {
       const text = await res.text();

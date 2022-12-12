@@ -186,8 +186,26 @@ export default class ChainwebEventService {
     this.unconfirmed = unconfirmed ?? [];
     this.confirmed = confirmed ?? [];
     this.orphaned = orphaned ?? [];
-    // TODO lastHeight
-    debugger;
+    this._calcLastHeight();
+    // TODO lastHeight improve?
+    this.logger.info(`Loaded state lastHeight=${this._lastHeight} confirmed=${confirmed.length} unconfirmed=${unconfirmed.length} orphaned=${orphaned.length}`);
+  }
+
+  /*
+   * Update lastHeight
+   */
+  async _calcLastHeight() {
+    // TODO IMPORTANT there is an edge case here where
+    // if chain=8 is +2 blocks ahead of chain=3
+    // we get an unconfirmed event from chain=8 and set lastHeight + 1
+    // we never see an event from chain=3 at lastHeight-1 or lastHeight
+    // maybe check lastHeight against confirmation height or Cut to see if we can move forward
+    // but that isn't a guarrantee that cw-data has actually caught up to that state
+    // we could always store lastSeenEvent - 2 as the lastHeight and de-dupe
+    const lastEvent = this.unconfirmed[0] ?? this.confirmed[0] ?? this.orphaned[0];
+    if (lastEvent) {
+      this._lastHeight = lastEvent.height + 1;
+    }
   }
 
   /*
@@ -199,6 +217,7 @@ export default class ChainwebEventService {
       setRedisUnconfirmedEvents(this._filter, this.unconfirmed),
       setRedisOrphanedEvents(this._filter, this.orphaned),
     ]);
+    this.logger.info(`Saved state lastHeight=${this._lastHeight} confirmed=${this.confirmed.length} unconfirmed=${this.unconfirmed.length} orphaned=${this.orphaned.length}`);
   }
 
   _step = async () => {
@@ -212,18 +231,52 @@ export default class ChainwebEventService {
         threads: 4,
         newestToOldest: true,
         moduleHashBlacklist,
-        logger: this.logger,
-      });
+        minHeight: this._lastHeight,
+      }, this.logger);
       this.lastUpdateTime = Date.now();
       for(const event of events) {
         await this._add(event);
       }
-      await this._saveState();
+      if (events.length) {
+        this._calcLastHeight();
+        await this._saveState();
+      }
     } catch(e) {
       this.logger.error(e);
     } finally {
       setTimeout(this._step, SERVICE_STEP_INTERVAL)
     }
+  }
+  
+  _eventExists(needle, collection) {
+    if (!collection) {
+      return this._eventExists(needle, this.unconfirmed) ||
+        this._eventExists(needle, this.confirmed) ||
+        this._eventExists(needle, this.orphaned);
+    }
+    const { height, requestKey, blockHash } = needle;
+    let needleJson; // lazily create needle JSON - if needed only
+    for(const event of collection) {
+      if (event.height !== height || event.requestKey !== requestKey || event.blockHash !== blockHash) {
+        // return early if basic stuff is different - save us a JSON.stringify
+        continue;
+      }
+      if (event.height < height) {
+        // we went past the needle event height, we can stop scanning
+        // assumes collections are sorted(!)
+        break;
+      }
+      if (!needleJson) {
+        needleJson = JSON.stringify(needle);
+      }
+      // could figure out a better way to compare
+      // but essentially we need most attributes to find duplicates
+      // e.g. a safe transfer txn is 2x coin.TRANSFER w/ same everything except params
+      if (needleJson === JSON.stringify(event)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   _blockStep = async () => {
@@ -242,11 +295,11 @@ export default class ChainwebEventService {
   async _add(event) {
     const classification = await this._classifyEvent(event);
     validateEventType(classification);
-    if (this[classification].includes(event)) {
-      this.logger.warn('Event already in ${classification}, not notifying');
+    if (this._eventExists(event)) {
+      this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${classification}, not notifying`);
       return
     }
-    this[classification].push(event) // should we unshift instead? what is the preferable order
+    this[classification].push(event) // TODO change this to push in-place (sorted)
     // call callbacks
     const callbackSet = eventTypeToCallbackSet(classification);
     this._executeCallbacks(this[callbackSet], event);
@@ -266,6 +319,7 @@ export default class ChainwebEventService {
     const { height, chain, blockHash } = event;
     const lastChainHeight = this._cut.lastCut.hashes[chain];
     if (lastChainHeight - height < CONFIRMATION_HEIGHT) {
+      debugger;
       return 'unconfirmed';
     }
     return 'confirmed'; // TODO

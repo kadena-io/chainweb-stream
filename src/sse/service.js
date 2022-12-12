@@ -1,4 +1,3 @@
-import { writeFileSync } from 'fs';
 import fetch, { Headers } from 'node-fetch';
 import every from 'lodash/every.js';
 import defaults from 'lodash/defaults.js';

@@ -1,4 +1,3 @@
-import { writeFileSync } from 'fs';
 import { getResponse, fetchWithRetry, postData } from './http.js';
 import { summarizeChainwebCut } from './utils.js';
 import { config } from '../../config/index.js';
@@ -10,7 +9,6 @@ export async function getChainwebCut() {
   const response = await getResponse(rawRes);
   const summary = summarizeChainwebCut(response);
   console.error('Got CW cut', JSON.stringify(summary));
-  writeFileSync('cw-cut.json', JSON.stringify(response));
   return response;
 }
 

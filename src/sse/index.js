@@ -36,23 +36,6 @@ export const sse = new SSE(
   { initialEvent: 'k:init' },
 );
 
-// changes:
-//
-// don't recalculate each time - keep state
-//  - currentCut
-//  - unconfirmed
-//  - confirmed
-//  - orphaned
-//
-// when sync, fetch from cw-data until bottom of unconfirmed (?)
-//
-
-/*
- * isBlockOrphaned()
- */
-
-
-
 const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
   let newKdaEvents = [];
   const orphanKeyMap = {};
