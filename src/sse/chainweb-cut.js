@@ -92,12 +92,11 @@ export default class ChainwebCutService {
     this._executeCallbacks(this.lastCut);
   }
 
-  async _getCut() {
+  async _getCut(logger) {
     const { chainwebHost, network } = this._config;
     const url = `https://${chainwebHost}/chainweb/0.0/${network}/cut`;
-    const rawResponse = await fetchWithRetry(url, { logger: this.logger });
+    const rawResponse = await fetchWithRetry(url, { logger: logger ?? this.logger });
     const response = await getResponse(rawResponse);
-    // const summary = summarizeChainwebCut(response);
     return response;
   }
 }

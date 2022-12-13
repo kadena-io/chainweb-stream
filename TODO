@@ -1,7 +1,10 @@
+[ ] change syncEvents method to provide results with callback as they happen. promise only for flow control, i.e. finished
+[ ] add permanence category ? lostEvents -> orphaned + not included in canonical chain
 [v] LOGGER
-[ ] classify events
-[ ] SSE support more filters, manage single Cut w/ multiple Event services
+[v] classify events
+[v] SSE support more filters, manage single Cut w/ multiple Event services
   - when we have many filters we may need to throttle/schedule cw-data api calls globally
+[ ] [ENIS] cw-data needs an index on modulename, too slow w/ prod cw-data
 
 [ ] CHECK sse updating init data proparly?
 

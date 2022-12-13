@@ -37,8 +37,7 @@ export async function getBlockHeaderBranch({ chain, hash, height, limit = 10, lo
   );
 
   const response = await getResponse(rawRes);
-  // TODO logger here
-  logger.debug(`Block Header req c=${chain} height=${height} hash=${hash} got ${JSON.stringify(response)}`);
+  //logger.(`Block Header req c=${chain} height=${height} hash=${hash} got ${JSON.stringify(response)}`);
   blockHeaderCache[cacheKey] = response;
 
   return response;

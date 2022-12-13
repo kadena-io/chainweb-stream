@@ -14,10 +14,12 @@ export async function getChainwebDataEvents(name, minHeight, limit = 50, offset 
   });
   const url = `http://${dataHost}/txs/events?${params}`;
 
+  const timeStart = Date.now();
   const rawRes = await fetchWithRetry(url, { logger });
+  const elapsed = Date.now() - timeStart;
 
   const response = await getResponse(rawRes);
-  logger.verbose(`Got CW DataE o=${offset} l=${limit} len=${response.length}`);
+  logger.verbose(`Got CW-Data "${name}" events limit=${limit} offset=${offset} response=${response.length} in ${elapsed} ms`);
   return response;
 }
 
@@ -26,7 +28,7 @@ const syncEventsFromChainwebDataDefaults = {
   threads: 4,
   newestToOldest: false,
   moduleHashBlacklist: [],
-  // totalLimit: 399, // DEBUG for quicker results
+  totalLimit: 0, // DEBUG for quicker results
 }
 
 export async function syncEventsFromChainwebData(opts, logger=console) {
@@ -52,8 +54,8 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
       promisedResults.push(getChainwebDataEvents(filter, minHeight, limit, offset, logger));
       offset = offset + limit;
     }
-    logger.verbose('batch pushed, end offset', offset);
     completedResults = await Promise.all(promisedResults);
+    logger.debug('Got', completedResults.reduce((num, arr) => num + arr.length, 0));
     // once a batch comes back empty, we're caught up
     continueSync = completedResults.every((v) => v.length >= limit) &&
       ( totalLimit === 0  ||

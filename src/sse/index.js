@@ -42,7 +42,7 @@ const getKdaEvents = async (prevKdaEvents, chainwebCut) => {
 
   try {
     const marmaladeEvents = await syncEventsFromChainwebData({
-      filter: 'marmalade.',
+      filter: 'marmalade.ledger',
       limit: 100,
       threads: 4,
       newestToOldest: true,

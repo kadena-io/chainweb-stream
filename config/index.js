@@ -30,7 +30,7 @@ const DEFAULT_KEYS = {
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
   REDIS_PASSWORD: ['redisPassword', ''],
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
-  DEFAULT_FILTER: ['defaultFilter', 'marmalade.'],
+  DEFAULT_FILTER: ['defaultFilter', 'marmalade.ledger'],
   LOG: ['log', 'verbose'], // TODO change before prod
   CONFIRMATION_HEIGHT: ['confirmationHeight', 6],
   EVENTS_STEP_INTERVAL: ['eventsStepInterval', 30_000],

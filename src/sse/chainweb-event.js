@@ -8,6 +8,7 @@ import ChainwebCutService from './chainweb-cut.js';
 import { syncEventsFromChainwebData } from './chainweb-data.js';
 import { config } from '../../config/index.js';
 import State from './chainweb-event-state.js';
+import { isOrphan } from './orphans.js';
 
 const CLASS_NAME = 'ChainwebEventService'
 
@@ -142,10 +143,12 @@ export default class ChainwebEventService {
         filter: this._filter,
         limit: 100,
         threads: 4,
+        // totalLimit: 1000,
         newestToOldest: true,
         moduleHashBlacklist,
         minHeight: this._minHeight,
       }, this.logger);
+      this.logger.log(`Got ${events.length} from chainweb-data`);
       this.lastUpdateTime = Date.now();
       let updated = 0;
       for(const event of events) {
@@ -193,12 +196,10 @@ export default class ChainwebEventService {
     const { height, chain, blockHash } = event;
     const lastChainHeight = this._cut.lastCut.hashes[chain];
     if (lastChainHeight - height < CONFIRMATION_HEIGHT) {
-      debugger;
       return 'unconfirmed';
     }
-    return 'confirmed'; // TODO
-    // check orphaned
-    // return confirmed
+    const isEventOrphaned = await isOrphan(event, this._cut.lastCut, this.logger);
+    return isEventOrphaned ? 'orphaned' : 'confirmed';
   }
 
   async _executeCallbacks(callbackSet, data) {
