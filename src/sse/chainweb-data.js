@@ -1,3 +1,4 @@
+import { writeFileSync } from 'fs';
 import defaults from 'lodash/defaults.js'
 import { fetchWithRetry, getResponse } from './http.js';
 import { config } from '../../config/index.js';
@@ -19,7 +20,11 @@ export async function getChainwebDataEvents(name, minHeight, limit = 50, offset 
   const elapsed = Date.now() - timeStart;
 
   const response = await getResponse(rawRes);
-  logger.verbose(`Got CW-Data "${name}" events limit=${limit} offset=${offset} response=${response.length} in ${elapsed} ms`);
+  if (typeof response === "string") {
+    logger.error(`Got CW-Data "${name}" events error limit=${limit} offset=${offset} response="${response}" in ${elapsed} ms`);
+    return []
+  }
+  logger.verbose(`Got CW-Data "${name}" events limit=${limit} offset=${offset} responseLength=${response.length} in ${elapsed} ms`);
   return response;
 }
 
@@ -55,13 +60,15 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
       offset = offset + limit;
     }
     completedResults = await Promise.all(promisedResults);
-    logger.debug('Got', completedResults.reduce((num, arr) => num + arr.length, 0));
+    // logger.debug('Got', completedResults.reduce((num, arr) => num + arr.length, 0));
     // once a batch comes back empty, we're caught up
     continueSync = completedResults.every((v) => v.length >= limit) &&
       ( totalLimit === 0  ||
         completedResults.reduce((total, results) => total + results.length, 0) <= totalLimit
       );
   }
+
+  writeFileSync(`cw-data-${filter}-${Date.now()}.json`, JSON.stringify(completedResults));
 
   completedResults = filterBlackListItems(completedResults, moduleHashBlacklist);
 

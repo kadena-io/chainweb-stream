@@ -148,6 +148,7 @@ export default class ChainwebEventService {
         moduleHashBlacklist,
         minHeight: this._minHeight,
       }, this.logger);
+      debugger;
       this.logger.log(`Got ${events.length} from chainweb-data`);
       this.lastUpdateTime = Date.now();
       let updated = 0;

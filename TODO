@@ -1,3 +1,6 @@
+[ ] debug dupe orphan
+[ ] figure out 1M events limit issue
+[ ] add /accounts/ endpoint for specific account tracking
 [ ] change syncEvents method to provide results with callback as they happen. promise only for flow control, i.e. finished
 [ ] add permanence category ? lostEvents -> orphaned + not included in canonical chain
 [v] LOGGER
