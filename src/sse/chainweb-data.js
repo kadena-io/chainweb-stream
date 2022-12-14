@@ -45,21 +45,26 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
     moduleHashBlacklist,
     totalLimit,
     minHeight,
+    callback,
   } = defaults(opts, syncEventsFromChainwebDataDefaults);
 
   let offset = 0;
-  let promisedResults = [];
+  let resultPromises = []
   let completedResults = [];
   let continueSync = true;
 
   logger.debug(`syncEventsFromChainwebData minHeight=${minHeight}`);
 
   while (continueSync) {
+    let batchPromises = [];
     for (let i = 0; i < threads; i++) {
-      promisedResults.push(getChainwebDataEvents(filter, minHeight, limit, offset, logger));
+      // TODO slow start with threads=1 when checking for updates
+      const fetchPromise = getChainwebDataEvents(filter, minHeight, limit, offset, logger);
+      batchPromises.push(fetchPromise);
+      fetchPromise.then(events => resultPromises.push(callback(filterBlackListItems(events, moduleHashBlacklist))));
       offset = offset + limit;
     }
-    completedResults = await Promise.all(promisedResults);
+    completedResults.push(...await Promise.all(batchPromises));
     // logger.debug('Got', completedResults.reduce((num, arr) => num + arr.length, 0));
     // once a batch comes back empty, we're caught up
     continueSync = completedResults.every((v) => v.length >= limit) &&

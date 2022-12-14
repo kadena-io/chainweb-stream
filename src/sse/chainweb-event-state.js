@@ -41,8 +41,9 @@ export default class ChainwebEventServiceState {
   confirmed = []
   orphaned = []
 
-  constructor({ filter }) {
+  constructor({ filter, logger }) {
     this._filter = filter;
+    this.logger = logger;
   }
 
   async load() {
@@ -51,8 +52,8 @@ export default class ChainwebEventServiceState {
       confirmed,
       orphaned,
     ] = await Promise.all([
-      getRedisConfirmedEvents(this._filter),
       getRedisUnconfirmedEvents(this._filter),
+      getRedisConfirmedEvents(this._filter),
       getRedisOrphanedEvents(this._filter),
     ]);
     this.unconfirmed = unconfirmed ?? [];
@@ -93,20 +94,39 @@ export default class ChainwebEventServiceState {
     );
   }
 
+  /* add deduped and sorted */
   add(permanence, event) {
-    this[permanence].push(event) // TODO change this to push in-place / sorted
+    const { height } = event;
+    for(let idx = 0; idx < this[permanence].length; idx++) {
+      const existing = this[permanence][idx];
+      if (existing.height > height) {
+        continue;
+      }
+      if (existing.height <= height) {
+        // we can insert if we need to
+        if (this._eventExists(event, permanence, idx)) {
+          this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${permanence}, not notifying`);
+          return false;
+        }
+        this[permanence].splice(idx, 0, event);
+        return true;
+      }
+    }
+    // fallback; no existing events OR pushing oldest event
+    this[permanence].push(event)
+    return true;
   }
 
-
-  eventExists(needle, collection) {
+  _eventExists(needle, collection, startIdx=0) {
     if (!collection) {
-      return this.eventExists(needle, this.unconfirmed) ||
-        this.eventExists(needle, this.confirmed) ||
-        this.eventExists(needle, this.orphaned);
+      return this._eventExists(needle, this.unconfirmed) ||
+        this._eventExists(needle, this.confirmed) ||
+        this._eventExists(needle, this.orphaned);
     }
     const { height, requestKey, blockHash } = needle;
     let needleJson; // lazily create needle JSON - if needed only
-    for(const event of collection) {
+    for(let idx = startIdx; idx < collection.length; idx++) {
+      const event = collection[idx];
       if (event.height !== height || event.requestKey !== requestKey || event.blockHash !== blockHash) {
         // return early if basic stuff is different - save us a JSON.stringify
         continue;

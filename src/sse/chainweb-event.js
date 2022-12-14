@@ -45,7 +45,7 @@ export default class ChainwebEventService {
 
     validateType(CLASS_NAME, 'filter', filter, 'string');
     this._filter = filter;
-    this.state = new State({ filter });
+    this.state = new State({ filter, logger: this.logger, });
 
     if (minHeight) {
       validateType(CLASS_NAME, 'minHeight', minHeight, 'number');
@@ -139,25 +139,31 @@ export default class ChainwebEventService {
       return;
     }
     try {
-      const events = await syncEventsFromChainwebData({
+      let updated = 0;
+      const addEvents = async (events) => {
+        this.lastUpdateTime = Date.now();
+        for(const event of events) {
+          updated += await this._add(event);
+        }
+      }
+
+      await syncEventsFromChainwebData({
         filter: this._filter,
         limit: 100,
         threads: 4,
-        // totalLimit: 1000,
+        totalLimit: 1000,
         newestToOldest: true,
         moduleHashBlacklist,
         minHeight: this._minHeight,
+        callback: addEvents,
       }, this.logger);
-      debugger;
-      this.logger.log(`Got ${events.length} from chainweb-data`);
-      this.lastUpdateTime = Date.now();
-      let updated = 0;
-      for(const event of events) {
-        updated += await this._add(event);
-      }
+
       if (updated) {
         this._calcLastHeight();
+        this.logger.log(`${updated} new events. New minHeight=${this._minHeight}`);
         await this._saveState();
+      } else {
+        this.logger.verbose('No updates');
       }
     } catch(e) {
       this.logger.error(e);
@@ -182,11 +188,10 @@ export default class ChainwebEventService {
   async _add(event) {
     const permanence = await this._classifyEvent(event);
     validateBlockPermanence(permanence);
-    if (this.state.eventExists(event)) {
-      this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${permanence}, not notifying`);
+    const isNew = this.state.add(permanence, event);
+    if (!isNew) {
       return 0;
     }
-    this.state.add(permanence, event);
     // call callbacks
     const callbackSet = blockPermanenceToCallbackSet(permanence);
     this._executeCallbacks(this[callbackSet], event);

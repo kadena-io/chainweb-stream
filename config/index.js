@@ -29,7 +29,6 @@ const DEFAULT_KEYS = {
   HTTP_MAX_RETRIES: ['httpMaxRetries', 2000],
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
   REDIS_PASSWORD: ['redisPassword', ''],
-  ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
   DEFAULT_FILTER: ['defaultFilter', 'marmalade.ledger'],
   LOG: ['log', 'verbose'], // TODO change before prod
   CONFIRMATION_HEIGHT: ['confirmationHeight', 6],

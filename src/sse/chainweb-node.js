@@ -30,6 +30,7 @@ export async function getBlockHeaderBranch({ chain, hash, height, limit = 10, lo
     // console.error('Returning cached block headers', cacheKey);
     return blockHeaderCache[cacheKey];
   }
+  debugger;
   const rawRes = await postData(
     `https://${chainwebHost}/chainweb/0.0/${network}/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
     { lower: [], upper: [hash] },
