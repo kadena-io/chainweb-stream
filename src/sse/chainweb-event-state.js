@@ -117,6 +117,16 @@ export default class ChainwebEventServiceState {
     return true;
   }
 
+  remove(permanence, event) {
+    const idx = this.state.unconfirmed.indexOf(event);
+    if (idx === -1) {
+      this.logger.warn(`Could not find event ${event.name} ${event.requestKey} from ${permanence} while trying to remove it from ${permanence}`);
+      return false;
+    }
+    this[permanence].splice(uncIdx, 1);
+    return true;
+  }
+
   _eventExists(needle, collection, startIdx=0) {
     if (!collection) {
       return this._eventExists(needle, this.unconfirmed) ||

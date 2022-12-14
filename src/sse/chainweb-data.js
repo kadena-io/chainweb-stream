@@ -55,6 +55,8 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
 
   logger.debug(`syncEventsFromChainwebData minHeight=${minHeight}`);
 
+  // TODO slow start with threads=1 if minHeight is set
+  // most of the times there won't be updates, 1 thread enough to check
   while (continueSync) {
     let batchPromises = [];
     for (let i = 0; i < threads; i++) {
@@ -77,9 +79,11 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
 
   completedResults = filterBlackListItems(completedResults, moduleHashBlacklist);
 
-  sortEvents(completedResults, newestToOldest);
+  // sortEvents(completedResults, newestToOldest);
 
-  logger.verbose('sync finished', completedResults.length);
+  logger.verbose('sync fetch finished. awaiting result processors', completedResults.length);
+  await Promise.all(resultPromises);
+  logger.verbose('sync finished.');
 
   return completedResults;
 }

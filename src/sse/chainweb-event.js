@@ -139,11 +139,16 @@ export default class ChainwebEventService {
       return;
     }
     try {
+      // deduped new event count
       let updated = 0;
+
+      // callback for syncEvents to stream data chunks
       const addEvents = async (events) => {
         this.lastUpdateTime = Date.now();
         for(const event of events) {
-          updated += await this._add(event);
+          if (await this._add(event)) {
+            updated++;
+          }
         }
       }
 
@@ -151,7 +156,7 @@ export default class ChainwebEventService {
         filter: this._filter,
         limit: 100,
         threads: 4,
-        totalLimit: 1000,
+        // totalLimit: 1000,
         newestToOldest: true,
         moduleHashBlacklist,
         minHeight: this._minHeight,
@@ -177,10 +182,11 @@ export default class ChainwebEventService {
       for(const event of this.state.unconfirmed) {
         const permanence = await this._classifyEvent(event);
         if (permanence !== 'unconfirmed') {
-          const uncIdx = this.state.unconfirmed.indexOf(event);
-          this.state.unconfirmed.splice(uncIdx, 1);
+          this.state.remove('unconfirmed', event);
           this._add(event);
         }
+        // TODO could add a .confirmations field to unconfirmed events
+        // and stream confirmation changes as they happen
       }
     }
   }
@@ -190,12 +196,12 @@ export default class ChainwebEventService {
     validateBlockPermanence(permanence);
     const isNew = this.state.add(permanence, event);
     if (!isNew) {
-      return 0;
+      return false;
     }
     // call callbacks
     const callbackSet = blockPermanenceToCallbackSet(permanence);
     this._executeCallbacks(this[callbackSet], event);
-    return 1;
+    return true;
   }
 
   async _classifyEvent(event) {
