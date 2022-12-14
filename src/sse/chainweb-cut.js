@@ -94,7 +94,7 @@ export default class ChainwebCutService {
 
   async _getCut(logger) {
     const { chainwebHost, network } = this._config;
-    const url = `https://${chainwebHost}/chainweb/0.0/${network}/cut`;
+    const url = `${chainwebHost}/chainweb/0.0/${network}/cut`;
     const rawResponse = await fetchWithRetry(url, { logger: logger ?? this.logger });
     const response = await getResponse(rawResponse);
     return response;

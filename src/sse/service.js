@@ -8,7 +8,6 @@ import ChainwebCutService from './chainweb-cut.js';
 
 const { chainwebHost, dataHost, network } = config;
 
-
 /*
  * ChainwebEventService
  *

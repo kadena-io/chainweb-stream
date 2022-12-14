@@ -5,7 +5,7 @@ import { config } from '../../config/index.js';
 const { chainwebHost, network } = config;
 
 export async function getChainwebCut() {
-  const rawRes = await fetchWithRetry(`https://${chainwebHost}/chainweb/0.0/${network}/cut`);
+  const rawRes = await fetchWithRetry(`${chainwebHost}/chainweb/0.0/${network}/cut`);
   const response = await getResponse(rawRes);
   const summary = summarizeChainwebCut(response);
   console.error('Got CW cut', JSON.stringify(summary));
@@ -32,7 +32,7 @@ export async function getBlockHeaderBranch({ chain, hash, height, limit = 10, lo
   }
   debugger;
   const rawRes = await postData(
-    `https://${chainwebHost}/chainweb/0.0/${network}/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
+    `${chainwebHost}/chainweb/0.0/${network}/chain/${chain}/header/branch?minheight=${height}&maxheight=${height}`,
     { lower: [], upper: [hash] },
     logger,
   );

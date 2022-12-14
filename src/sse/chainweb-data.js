@@ -13,7 +13,7 @@ export async function getChainwebDataEvents(name, minHeight, limit = 50, offset 
     limit,
     offset,
   });
-  const url = `http://${dataHost}/txs/events?${params}`;
+  const url = `${dataHost}/txs/events?${params}`;
 
   const timeStart = Date.now();
   const rawRes = await fetchWithRetry(url, { logger });
