@@ -28,7 +28,7 @@ export function validateDefined(place, name, value) {
   }
 }
 
-export function validateInstanceof(place, name, value, _class) {
+export function validateInstanceOf(place, name, value, _class) {
   if (!(value instanceof _class)) {
     let expected='?';
     try {

@@ -1,6 +1,9 @@
 import SSE from 'express-sse';
 import ChainwebEventService from './chainweb-event.js';
 import Logger from './logger.js';
+import ChainwebCutService from './chainweb-cut.js';
+
+let cut;
 
 const defaultLimit = 100;
 
@@ -20,7 +23,10 @@ export default class RouteService {
     }
     this.filter = filter;
     this.sse = new SSE();
-    this.eventService = new ChainwebEventService({ filter });
+    if (!cut) {
+      cut = new ChainwebCutService();
+    }
+    this.eventService = new ChainwebEventService({ filter, cut });
     this.eventService.on('confirmed', event => this.sse.send(event), 'update');
     this.logger = new Logger('EventRoute', filter);
     existing[filter] = this;

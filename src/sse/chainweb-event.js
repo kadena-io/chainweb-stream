@@ -3,6 +3,7 @@ import {
   validateDefined,
   validateType,
   validateBlockPermanence,
+  validateInstanceOf,
 } from './types.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { syncEventsFromChainwebData } from './chainweb-data.js';
@@ -56,6 +57,7 @@ export default class ChainwebEventService {
       validateInstanceOf(CLASS_NAME, 'cut', cut, ChainwebCutService);
       this._cut = cut;
     } else {
+      this.logger.warn('Initializing new Cut service');
       this._cut = new ChainwebCutService();
     }
   }
@@ -164,7 +166,7 @@ export default class ChainwebEventService {
       const syncOptions = {
         filter: this._filter,
         limit: 100,
-        threads: 4,
+        threads: 1,
         totalLimit: 799,
         newestToOldest: true,
         moduleHashBlacklist,

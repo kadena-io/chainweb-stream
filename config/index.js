@@ -71,7 +71,7 @@ export const config = { // TODO default export ?
 for (const [requireKey, configKey] of Object.entries(REQUIRE_KEYS)) {
   const envValue = process.env[requireKey];
   if (typeof envValue === "undefined") {
-    die(`Required env var missing: ${requireKey}`);
+    die(`Required env var missing: ${requireKey}\nCopy .default.env to .env and set up the variables to your preference.`);
   }
   config[configKey] = envValue;
 }
