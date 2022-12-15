@@ -1,3 +1,9 @@
-- reasonable limits for initial requests
+[ ] reasonable limits for initial requests
   - default 100, max 1000 ? 
   - this would simplify our storage and cw-data querying significantly
+
+[ ] fork express-sse
+  - seems abandoned
+  - good PRs sitting for 2yrs+
+  - particular WONTFIX bug about sending initial events to all connected clients is a blocker:
+    - https://github.com/dpskvn/express-sse/issues/21
