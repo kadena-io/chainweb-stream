@@ -22,7 +22,10 @@ export default class RouteService {
       return existing[filter];
     }
     this.filter = filter;
-    this.sse = new SSE();
+    this.sse = new SSE(
+      [],
+      { initialEvent: 'initial' },
+    );
     if (!cut) {
       cut = new ChainwebCutService();
     }
@@ -51,7 +54,6 @@ export default class RouteService {
     // TODO handle different permanence parameters, eg ?permanence=confirmed or =all 
     this.sse.updateInit(
       [ this.eventService.state.getConfirmedEvents({ limit }) ],
-      { initialEvent: 'initial' },
     );
 
     req.on('close', () => {
