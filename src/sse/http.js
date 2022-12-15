@@ -10,9 +10,14 @@ export async function fetchWithRetry(url, opts = {}, tries = 0) {
     const method = opts?.method ?? 'GET';
     logger.debug(`${method} ${url}${tries ? ` [Retries: ${tries}]` : ''}`);
     const res = await fetch(url, fetchOpts);
-    if (res.status >= 500) {
-      const text = await res.text();
-      throw text;
+    const { status } = res;
+    if (status >= 400) {
+      let text = '<Could not get response text>';
+      try { // try/catch just in case/for robustness
+        text = await res.text();
+      } catch(e) {}
+      const message = `${status} ${text}`;
+      throw new Error(message);
     }
     return res;
   } catch(e) {

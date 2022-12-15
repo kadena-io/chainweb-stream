@@ -25,6 +25,8 @@ function presentEvents(sources, options) {
 
   const output = sources.reduce((out, arr) => {
     if (filterPredicates.length) {
+      // TODO if we have a limit set and a lot of data
+      // we can save a bunch by returning up to limit from each arr
       arr = arr.filter(event => filterPredicates.every(pred => pred(event)));
     }
     return out.concat(arr);
@@ -118,12 +120,12 @@ export default class ChainwebEventServiceState {
   }
 
   remove(permanence, event) {
-    const idx = this.state.unconfirmed.indexOf(event);
+    const idx = this.unconfirmed.indexOf(event);
     if (idx === -1) {
       this.logger.warn(`Could not find event ${event.name} ${event.requestKey} from ${permanence} while trying to remove it from ${permanence}`);
       return false;
     }
-    this[permanence].splice(uncIdx, 1);
+    this[permanence].splice(idx, 1);
     return true;
   }
 

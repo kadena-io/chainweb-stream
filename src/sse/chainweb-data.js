@@ -9,9 +9,9 @@ const { dataHost } = config;
 export async function getChainwebDataEvents(name, minHeight, limit = 50, offset = 0, logger = console) {
   const params = new URLSearchParams({
     name,
-    minheight: minHeight,
     limit,
-    offset,
+    ...(offset ? { offset } : null),
+    ...(minHeight ? { minheight: minHeight } : null),
   });
   const url = `${dataHost}/txs/events?${params}`;
 
@@ -75,7 +75,10 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
       );
   }
 
-  writeFileSync(`cw-data-${filter}-${Date.now()}.json`, JSON.stringify(completedResults));
+  try {
+    writeFileSync(`junk/cw-data-${filter}-${Date.now()}.json`, JSON.stringify(completedResults));
+  } catch(e) {
+  }
 
   completedResults = filterBlackListItems(completedResults, moduleHashBlacklist);
 

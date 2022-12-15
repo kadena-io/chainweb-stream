@@ -1,20 +1,21 @@
 import express from 'express';
-import { sse } from '../sse/index.js';
+import { eventRoute, addressRoute } from '../sse/index.js';
 import { getRedisConfirmedEvents, clearRedis } from '../sse/redis/index.js';
 import { config } from '../../config/index.js';
 
 export const router = express.Router();
 
-router.get('/stream', sse.init);
+router.get('/stream/event/:eventType', eventRoute);
+
+router.get('/stream/address/:address', addressRoute);
 
 router.get('/status', async (request, response) => {
-  const kdaEvents = await getRedisConfirmedEvents(config.defaultFilter);
-  response.json({ kdaEvents });
+  response.json({ TODO: 1 });
 });
 
-router.get('/clearKDAEvents', async (request, response) => {
-  if (request.query.user === config.password) {
-    const status = await clearRedis();
-    response.json({ status });
-  }
-});
+// router.get('/clearKDAEvents', async (request, response) => {
+//     const status = await clearRedis();
+//   if (request.query.user === config.password) {
+//     response.json({ status });
+//   }
+// });

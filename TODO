@@ -1,4 +1,8 @@
-[ ] _add from loadCache should not query orphan state again
+[ ] BUG new connection sends initial events to previous connections
+[x] BUG confirmed not set during first sync? new requests dont get k:init at all
+  - change how init send works completely to support ?limit and be more robust
+[v] _add from loadCache should not query orphan state again
+  - it was a different issue, but ok
 
 [ ] debug dupe orphan
 [ ] figure out 1M events limit issue
@@ -20,3 +24,5 @@
 [ ] tests
 [ ] typescript
 [ ] EventService .lastHeight race condition/optimization - or just use .lastHeight - (maxHeightSeen - 2) every time
+
+[ ] generic errors as json

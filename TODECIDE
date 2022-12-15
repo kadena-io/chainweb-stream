@@ -1,0 +1,3 @@
+- reasonable limits for initial requests
+  - default 100, max 1000 ? 
+  - this would simplify our storage and cw-data querying significantly

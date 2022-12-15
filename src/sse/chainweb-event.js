@@ -60,14 +60,20 @@ export default class ChainwebEventService {
     }
   }
 
-  async start() {
+  async init() {
     await this._loadState();
-    this.running = true;
+  }
+
+  async start() {
+    if (!this.state.confirmed.length) {
+      await this.init();
+    }
     this._cut.registerUpdateCallback(this._blockStep);
     if (!this._cut.running) {
       await this._cut.start();
     }
-    this.logger.verbose(`Started with minHeight=${this._minHeight}`);
+    this.running = true;
+    this.logger.verbose(`Started with minHeight=${this._minHeight} cw=${JSON.stringify(this._cut.lastCut)}`);
     try {
       await this._step();
     } catch(e) {
@@ -77,6 +83,7 @@ export default class ChainwebEventService {
   }
 
   stop() {
+    // TODO stop in progress operations?
     this.running = false;
     if (this._cut) {
       this._cut.unregisterUpdateCallback(this._blockStep);
@@ -84,6 +91,8 @@ export default class ChainwebEventService {
   }
 
   on(type, callback) {
+    // implement onError?
+    // if so, redact hostnames from errors
     validateType(CLASS_NAME, 'callback', callback, 'function');
     const set = blockPermanenceToCallbackSet(type);
     this[set].add(callback);
@@ -152,16 +161,18 @@ export default class ChainwebEventService {
         }
       }
 
-      await syncEventsFromChainwebData({
+      const syncOptions = {
         filter: this._filter,
         limit: 100,
         threads: 4,
-        // totalLimit: 1000,
+        totalLimit: 799,
         newestToOldest: true,
         moduleHashBlacklist,
         minHeight: this._minHeight,
         callback: addEvents,
-      }, this.logger);
+      };
+
+      await syncEventsFromChainwebData(syncOptions, this.logger);
 
       if (updated) {
         this._calcLastHeight();
@@ -182,6 +193,7 @@ export default class ChainwebEventService {
       for(const event of this.state.unconfirmed) {
         const permanence = await this._classifyEvent(event);
         if (permanence !== 'unconfirmed') {
+          this.logger.verbose(event.requestKey, event.name, 'unconfirmed ->');
           this.state.remove('unconfirmed', event);
           this._add(event);
         }
@@ -198,6 +210,7 @@ export default class ChainwebEventService {
     if (!isNew) {
       return false;
     }
+    // this.logger.verbose(event.requestKey, event.name, permanence);
     // call callbacks
     const callbackSet = blockPermanenceToCallbackSet(permanence);
     this._executeCallbacks(this[callbackSet], event);
@@ -206,7 +219,7 @@ export default class ChainwebEventService {
 
   async _classifyEvent(event) {
     const { height, chain, blockHash } = event;
-    const lastChainHeight = this._cut.lastCut.hashes[chain];
+    const lastChainHeight = this._cut.lastCut.hashes[chain].height;
     if (lastChainHeight - height < CONFIRMATION_HEIGHT) {
       return 'unconfirmed';
     }
