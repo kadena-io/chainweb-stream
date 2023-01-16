@@ -40,13 +40,15 @@ export default class ChainwebEventService {
   _unconfirmedCallbacks = new Set()
   _orphanedCallbacks = new Set()
 
-  constructor({ filter, minHeight, cut }) {
+  constructor({ type, filter, minHeight, cut }) {
     const logPrefix = filter.endsWith('.') ? filter.slice(0, filter.length - 1) : filter;
     this.logger = new Logger('EventService', logPrefix);
 
-    validateType(CLASS_NAME, 'filter', filter, 'string');
+    validateType(CLASS_NAME, type, filter, 'string');
+    this._type = type;
+    // TODO validate event type IF we keep this for multiple types, e.g. account & module
     this._filter = filter;
-    this.state = new State({ filter, logger: this.logger, });
+    this.state = new State({ type, filter, logger: this.logger, });
 
     if (minHeight) {
       validateType(CLASS_NAME, 'minHeight', minHeight, 'number');
@@ -164,11 +166,10 @@ export default class ChainwebEventService {
       }
 
       const syncOptions = {
+        type: this._type,
         filter: this._filter,
         limit: 100,
-        threads: 1,
-        totalLimit: 799,
-        newestToOldest: true,
+        totalLimit: 100,
         moduleHashBlacklist,
         minHeight: this._minHeight,
         callback: addEvents,

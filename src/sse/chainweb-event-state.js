@@ -43,7 +43,8 @@ export default class ChainwebEventServiceState {
   confirmed = []
   orphaned = []
 
-  constructor({ filter, logger }) {
+  constructor({ type, filter, logger }) {
+    this._type = type;
     this._filter = filter;
     this.logger = logger;
   }
@@ -54,9 +55,9 @@ export default class ChainwebEventServiceState {
       confirmed,
       orphaned,
     ] = await Promise.all([
-      getRedisUnconfirmedEvents(this._filter),
-      getRedisConfirmedEvents(this._filter),
-      getRedisOrphanedEvents(this._filter),
+      getRedisUnconfirmedEvents(this._type, this._filter),
+      getRedisConfirmedEvents(this._type, this._filter),
+      getRedisOrphanedEvents(this._type, this._filter),
     ]);
     this.unconfirmed = unconfirmed ?? [];
     this.confirmed = confirmed ?? [];
@@ -65,9 +66,9 @@ export default class ChainwebEventServiceState {
 
   async save() {
     await Promise.all([
-      setRedisConfirmedEvents(this._filter, this.confirmed),
-      setRedisUnconfirmedEvents(this._filter, this.unconfirmed),
-      setRedisOrphanedEvents(this._filter, this.orphaned),
+      setRedisConfirmedEvents(this._type, this._filter, this.confirmed),
+      setRedisUnconfirmedEvents(this._type, this._filter, this.unconfirmed),
+      setRedisOrphanedEvents(this._type, this._filter, this.orphaned),
     ]);
   }
 

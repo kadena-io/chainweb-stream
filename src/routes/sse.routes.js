@@ -1,5 +1,5 @@
 import express from 'express';
-import { eventRoute, addressRoute } from '../sse/index.js';
+import { eventRoute, accountRoute } from '../sse/index.js';
 import { getRedisConfirmedEvents, clearRedis } from '../sse/redis/index.js';
 import { config } from '../../config/index.js';
 
@@ -7,7 +7,7 @@ export const router = express.Router();
 
 router.get('/stream/event/:eventType', eventRoute);
 
-router.get('/stream/address/:address', addressRoute);
+router.get('/stream/account/:address', accountRoute);
 
 router.get('/status', async (request, response) => {
   response.json({ TODO: 1 });

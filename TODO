@@ -17,14 +17,21 @@
 
 -- Next
 
+[ ] add /accounts/ endpoint for specific account tracking
 [ ] BUG new connection sends initial events to previous connections
   - this is known + intentional: https://github.com/dpskvn/express-sse/issues/21
   [ ] fork express-sse
     - there are good PRs stale for 2 years+
-[ ] add /accounts/ endpoint for specific account tracking
 [ ] add permanence category ? lostEvents -> orphaned + not included in canonical chain
 [ ] tests
 [ ] typescript
 [ ] EventService .lastHeight race condition/optimization - or just use .lastHeight - (maxHeightSeen - 2) every time
+
+[ ] meta events/data:
+  event:status data:{"event":"open"} 
+  - useful to signal connection opened and waiting for data (e.g. accounts)? or is EventSource.open enough? 
+  event:status data:{"event":"error","message":"..."}
+  event:status data:{"event":"warning","message":"..."}
+  event:status data:{"event":"debug","message":"..."}
 
 [ ] generic errors as json

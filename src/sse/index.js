@@ -14,11 +14,12 @@ export const eventRoute = async (req, res) => {
   if (!filter) {
     return notFoundResponse(req, res);
   }
-  return RouteService.route(filter)(req, res);
+  return RouteService.route('events', filter)(req, res);
 }
 
-export const addressRoute = async (req, res) => {
-  return notFoundResponse(req, res);
+export const accountRoute = async (req, res) => {
+  const { address } = req.params;
+  return RouteService.route('account', address)(req, res);
 }
 
 async function notFoundResponse(req, res) {

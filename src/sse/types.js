@@ -22,7 +22,7 @@ export function validateType(place, name, value, _type) {
 }
 
 export function validateDefined(place, name, value) {
-  const [wasNull, wasUndefined] = [isNull(value) || isUndefined(value)];
+  const [wasNull, wasUndefined] = [isNull(value), isUndefined(value)];
   if (wasNull || wasUndefined) {
     throw new Error(`${place} expected "${name}" argument to be defined but it was: ${wasNull ? 'null' : 'undefined'}`);
   }

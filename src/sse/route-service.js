@@ -12,27 +12,32 @@ const defaultLimit = 100;
  */
 const existing = {};
 
+function concatTypeFilter(type, filter) {
+  return `${type}:${filter}`;
+}
+
 export default class RouteService {
   inited = false;
   eventService = null;
   sse = null;
 
-  constructor({ filter }) {
-    if (existing[filter]) {
-      return existing[filter];
+  constructor({ type, filter }) {
+    if (existing[concatTypeFilter(type, filter)]) {
+      return existing[concatTypeFilter(type, filter)];
     }
+    this.type = type;
     this.filter = filter;
     this.sse = new SSE(
-      [],
+      [], // This produces [[]], can we make it send [] ? 
       { initialEvent: 'initial' },
     );
     if (!cut) {
       cut = new ChainwebCutService();
     }
-    this.eventService = new ChainwebEventService({ filter, cut });
+    this.eventService = new ChainwebEventService({ type, filter, cut });
     this.eventService.on('confirmed', event => this.sse.send(event), 'update');
-    this.logger = new Logger('EventRoute', filter);
-    existing[filter] = this;
+    this.logger = new Logger('EventRoute', type, filter);
+    existing[concatTypeFilter(type, filter)] = this;
   }
 
   async init() {
@@ -53,7 +58,7 @@ export default class RouteService {
     // this is needed regardless to refresh initial data send to the latest data
     // TODO handle different permanence parameters, eg ?permanence=confirmed or =all 
     this.sse.updateInit(
-      [ this.eventService.state.getConfirmedEvents({ limit }) ],
+      this.eventService.state.getConfirmedEvents({ limit }),
     );
 
     req.on('close', () => {
@@ -73,16 +78,16 @@ export default class RouteService {
 
   destroy() {
     this.eventService.stop()
-    delete existing[this.filter];
+    delete existing[concatTypeFilter(this.type, this.filter)];
   }
 }
 
-RouteService.get = (filter) => {
-  return existing[filter] ?? new RouteService({ filter })
+RouteService.get = (type, filter) => {
+  return existing[concatTypeFilter(type, filter)] ?? new RouteService({ type, filter })
 }
 
-RouteService.route = (filter) => {
-  return RouteService.get(filter).route;
+RouteService.route = (type, filter) => {
+  return RouteService.get(type, filter).route;
 }
 
 function parseLimit(limit, defaultLimit) {
