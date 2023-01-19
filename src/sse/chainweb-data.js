@@ -93,7 +93,6 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
       break;
     _next = next;
     console.log('next', next);
-    debugger;
   }
 
   try {

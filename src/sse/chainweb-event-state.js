@@ -107,7 +107,7 @@ export default class ChainwebEventServiceState {
       }
       if (existing.height <= height) {
         // we can insert if we need to
-        if (this._eventExists(event, permanence, idx)) {
+        if (this._eventExists(event, this[permanence], idx)) {
           this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${permanence}, not notifying`);
           return false;
         }
@@ -131,7 +131,7 @@ export default class ChainwebEventServiceState {
   }
 
   _eventExists(needle, collection, startIdx=0) {
-    if (!collection) {
+    if (!collection || !Array.isArray(collection)) {
       return this._eventExists(needle, this.unconfirmed) ||
         this._eventExists(needle, this.confirmed) ||
         this._eventExists(needle, this.orphaned);

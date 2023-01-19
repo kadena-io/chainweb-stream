@@ -35,3 +35,9 @@
   event:status data:{"event":"debug","message":"..."}
 
 [ ] generic errors as json
+
+[ ] dedupe bug in event state
+[ ] accounts minheight not preserved
+[ ] accounts chainid vs chain
+[ ] close temporary listeners
+[ ] implement minheight in outer rest queries
