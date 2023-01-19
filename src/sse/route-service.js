@@ -52,13 +52,14 @@ export default class RouteService {
     if (!this.inited) {
       await this.init();
     }
-    const limit = parseLimit(req.query.limit, defaultLimit);
+    const limit = parseParam(req.query.limit, defaultLimit);
+    const minHeight = parseParam(req.query.minHeight);
     // (ab)use init event / updateInit to handle different initial query params
     // TODO handle limit intelligently - wait if we haven't reached that yet, etc
     // this is needed regardless to refresh initial data send to the latest data
     // TODO handle different permanence parameters, eg ?permanence=confirmed or =all 
     this.sse.updateInit(
-      this.eventService.state.getConfirmedEvents({ limit }),
+      this.eventService.state.getConfirmedEvents({ limit, minHeight }),
     );
 
     req.on('close', () => {
@@ -95,13 +96,13 @@ RouteService.route = (type, filter) => {
   return RouteService.get(type, filter).route;
 }
 
-function parseLimit(limit, defaultLimit) {
-  if (!limit) {
-    return defaultLimit;
+function parseParam(value, defaultValue) {
+  if (!value) {
+    return defaultValue;
   }
-  limit = Number(limit);
-  if (!Number.isFinite(limit) || limit > defaultLimit) {
-    return defaultLimit;
+  value = Number(value);
+  if (!Number.isFinite(value) || (typeof defaultValue !== "undefined" && value > defaultValue)) {
+    return defaultValue;
   }
-  return limit;
+  return value;
 }

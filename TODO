@@ -36,8 +36,9 @@
 
 [ ] generic errors as json
 
-[ ] dedupe bug in event state
-[ ] accounts minheight not preserved
-[ ] accounts chainid vs chain
-[ ] close temporary listeners
-[ ] implement minheight in outer rest queries
+[v] dedupe bug in event state
+[v] accounts chainid vs chain
+[v] close temporary listeners
+[v] accounts minheight not preserved
+[v] implement minheight in outer rest queries
+[ ] another express-sse bug: not sending [] as first event

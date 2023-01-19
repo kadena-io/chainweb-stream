@@ -2,15 +2,17 @@ import { writeFileSync } from 'fs';
 import defaults from 'lodash/defaults.js'
 import { fetchWithRetry, getResponse } from './http.js';
 import { config } from '../../config/index.js';
-import { filterBlackListItems, sortEvents } from './utils.js';
+import { filterBlackListItems } from './utils.js';
 import { isUndefined } from './types.js';
 
 const { dataHost } = config;
 
 export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 50, next = undefined, logger = console) {
+  const isAccount = endpoint.startsWith('account/');
+
   const params = new URLSearchParams({
     ...(name ? { name } : null),
-    ...(minHeight ? { minheight: minHeight } : null),
+    ...(minHeight && !isAccount ? { minheight: minHeight } : null),
     ...(next ? { next } : null),
     limit,
   });
@@ -22,10 +24,10 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
 
   const nextNext = rawRes.headers.get('chainweb-next');
 
-  const response = await getResponse(rawRes);
+  let response = await getResponse(rawRes);
   if (typeof response === "string") {
     logger.error(`${url} response="${response}" in ${elapsed} ms`);
-    return []
+    return { response: [], }; // TODO should this throw
   }
   // /txs/account returns .chainid
   // /txs/events returns .chain
@@ -42,6 +44,12 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
     return elem;
   });
   logger.verbose(`${url} ${rawRes.status} responseLength=${response.length} in ${elapsed} ms`);
+
+  if (isAccount && minHeight) {
+    console.log("before", response.length);
+    response = response.filter(({height}) => height >= minHeight);
+    console.log("after", response.length);
+  }
 
   return { response, next: nextNext };
 }
@@ -82,7 +90,9 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
   const [endpoint, nameParam] = getEndpointParams(type, filter);
   while (completedResults.length < totalLimit ) {
     const { response, next } = await getChainwebDataEvents(endpoint, filter, minHeight, limit, _next, logger);
-    const data = filterBlackListItems(response, moduleHashBlacklist);
+    let data = filterBlackListItems(response, moduleHashBlacklist);
+    if (type === 'accounts') {
+    }
     try {
       resultPromises.push(callback(data));
     } catch(e) {
