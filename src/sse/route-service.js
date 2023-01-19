@@ -72,7 +72,12 @@ export default class RouteService {
   connectionClosed() {
     // TODO for AccountService: stop/destroy when listeners = 0
     setTimeout(() => {
-      this.logger.debug(`Connection closed. Open ${this.filter} connections: `, this.sse.listenerCount('data'));
+      const listeners = this.sse.listenerCount('data');
+      this.logger.debug(`Connection closed. Open ${this.filter} connections: `, listeners);
+      if (listeners === 0) {
+        this.logger.log(`Last listener closed for ${this.filter}`);
+        this.destroy();
+      }
     }, 1);
   }
 
