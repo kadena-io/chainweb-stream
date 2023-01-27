@@ -6,6 +6,7 @@ import RouteService from './route-service.js';
 const availableModules = {
   'coin': 'coin',
   'marmalade': 'marmalade.ledger',
+  'klaim': 'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim',
 };
 
 export const eventRoute = async (req, res) => {

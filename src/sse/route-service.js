@@ -5,7 +5,7 @@ import ChainwebCutService from './chainweb-cut.js';
 
 let cut;
 
-const defaultLimit = 100;
+const defaultLimit = 25;
 
 /*
  * Singleton service for SSE routing event filter requests
@@ -34,7 +34,7 @@ export default class RouteService {
     if (!cut) {
       cut = new ChainwebCutService();
     }
-    this.eventService = new ChainwebEventService({ type, filter, cut });
+    this.eventService = new ChainwebEventService({ type, filter, cut, limit: defaultLimit });
     this.eventService.on('confirmed', event => this.sse.send(event), 'update');
     this.logger = new Logger('EventRoute', type, filter);
     existing[concatTypeFilter(type, filter)] = this;
@@ -79,7 +79,7 @@ export default class RouteService {
         this.logger.log(`Last listener closed for ${this.filter}`);
         this.destroy();
       }
-    }, 1);
+    }, 2000);
   }
 
   destroy() {

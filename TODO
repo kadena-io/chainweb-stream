@@ -42,3 +42,5 @@
 [v] accounts minheight not preserved
 [v] implement minheight in outer rest queries
 [ ] another express-sse bug: not sending [] as first event
+
+[ ] not sending [] when there aren't events to be found

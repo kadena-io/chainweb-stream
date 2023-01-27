@@ -12,7 +12,7 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
 
   const params = new URLSearchParams({
     ...(name ? { name } : null),
-    ...(minHeight && !isAccount ? { minheight: minHeight } : null),
+    ...(minHeight ? { minheight: minHeight } : null),
     ...(next ? { next } : null),
     limit,
   });
@@ -29,27 +29,8 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
     logger.error(`${url} response="${response}" in ${elapsed} ms`);
     return { response: [], }; // TODO should this throw
   }
-  // /txs/account returns .chainid
-  // /txs/events returns .chain
-  // make both appear in both types for now, decide how to handle later TODO
-  response.map((elem, i, all) => {
-    const hasChain = !isUndefined(elem.chain);
-    const hasChainId = !isUndefined(elem.chainid);
-    if (hasChain && !hasChainId)
-      elem.chainid = elem.chain
-    else if (!hasChain && hasChainId)
-      elem.chain = elem.chainid
-    else if (!hasChain && !hasChainId)
-      throw new Error(`Unexpected element (no chain[id]) in index ${i}: ${JSON.stringify(all)}`);
-    return elem;
-  });
-  logger.verbose(`${url} ${rawRes.status} responseLength=${response.length} in ${elapsed} ms`);
 
-  if (isAccount && minHeight) {
-    console.log("before", response.length);
-    response = response.filter(({height}) => height >= minHeight);
-    console.log("after", response.length);
-  }
+  logger.verbose(`${url} ${rawRes.status} responseLength=${response.length} in ${elapsed} ms`);
 
   return { response, next: nextNext };
 }
