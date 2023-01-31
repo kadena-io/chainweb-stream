@@ -17,7 +17,7 @@ export default class ChainwebCutService {
 
   constructor(config = defaultConfig) {
     this.logger = new Logger('CutService');
-    const { chainwebHost, network, updateInterval = 30_000 } = config;
+    const { chainwebHost, network, updateInterval = 15_000 } = config;
     validateDefined(CLASS_NAME, 'chainwebHost', chainwebHost);
     validateDefined(CLASS_NAME, 'network', network);
     validateType(CLASS_NAME, 'updateInterval', updateInterval, 'number');

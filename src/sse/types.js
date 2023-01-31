@@ -1,4 +1,4 @@
-export const BLOCK_PERMANENCE_STATES = ['confirmed', 'unconfirmed', 'orphaned'];
+export const BLOCK_PERMANENCE_STATES = ['confirmed', 'unconfirmed', 'updateConfirmations', 'orphaned'];
 
 export function validateBlockPermanence(blockPermanence) {
   if (!BLOCK_PERMANENCE_STATES.includes(blockPermanence)) {

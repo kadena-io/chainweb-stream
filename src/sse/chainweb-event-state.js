@@ -136,11 +136,10 @@ export default class ChainwebEventServiceState {
         this._eventExists(needle, this.confirmed) ||
         this._eventExists(needle, this.orphaned);
     }
-    const { height, requestKey, blockHash } = needle;
-    let needleJson; // lazily create needle JSON - if needed only
+    const { height, requestKey, blockHash, meta: { id } } = needle;
     for(let idx = startIdx; idx < collection.length; idx++) {
       const event = collection[idx];
-      if (event.height !== height || event.requestKey !== requestKey || event.blockHash !== blockHash) {
+      if (event.meta.id !== id || event.height !== height || event.requestKey !== requestKey || event.blockHash !== blockHash) {
         // return early if basic stuff is different - save us a JSON.stringify
         continue;
       }
@@ -149,13 +148,7 @@ export default class ChainwebEventServiceState {
         // assumes collections are sorted(!)
         break;
       }
-      if (!needleJson) {
-        needleJson = JSON.stringify(needle);
-      }
-      // could figure out a better way to compare
-      // but essentially we need most attributes to find duplicates
-      // e.g. a safe transfer txn is 2x coin.TRANSFER w/ same everything except params
-      if (needleJson === JSON.stringify(event)) {
+      if (event.meta.id === id) {
         return true;
       }
     }

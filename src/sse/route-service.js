@@ -6,6 +6,7 @@ import ChainwebCutService from './chainweb-cut.js';
 let cut;
 
 const defaultLimit = 25;
+const maxLimit = 100;
 
 /*
  * Singleton service for SSE routing event filter requests
@@ -36,6 +37,8 @@ export default class RouteService {
     }
     this.eventService = new ChainwebEventService({ type, filter, cut, limit: defaultLimit });
     this.eventService.on('confirmed', event => this.sse.send(event), 'update');
+    this.eventService.on('unconfirmed', event => this.sse.send(event), 'update');
+    this.eventService.on('updateConfirmations', event => this.sse.send(event), 'update');
     this.logger = new Logger('EventRoute', type, filter);
     existing[concatTypeFilter(type, filter)] = this;
   }
@@ -59,7 +62,7 @@ export default class RouteService {
     // this is needed regardless to refresh initial data send to the latest data
     // TODO handle different permanence parameters, eg ?permanence=confirmed or =all 
     this.sse.updateInit(
-      this.eventService.state.getConfirmedEvents({ limit, minHeight }),
+      this.eventService.state.getAllEvents({ limit, minHeight }),
     );
 
     req.on('close', () => {
@@ -101,8 +104,11 @@ function parseParam(value, defaultValue) {
     return defaultValue;
   }
   value = Number(value);
-  if (!Number.isFinite(value) || (typeof defaultValue !== "undefined" && value > defaultValue)) {
+  if (!Number.isFinite(value)) {
     return defaultValue;
+  }
+  if (typeof defaultValue !== "undefined" && value > maxLimit) {
+    return maxLimit;
   }
   return value;
 }

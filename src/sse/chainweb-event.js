@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import Logger from './logger.js';
 import {
   validateDefined,
@@ -38,6 +39,7 @@ export default class ChainwebEventService {
   // callbacks for: confirmed/unconfirmed/orphaned events
   _confirmedCallbacks = new Set()
   _unconfirmedCallbacks = new Set()
+  _updateConfirmationsCallbacks = new Set()
   _orphanedCallbacks = new Set()
 
   constructor({ type, filter, minHeight, cut }) {
@@ -99,6 +101,7 @@ export default class ChainwebEventService {
     // if so, redact hostnames from errors
     validateType(CLASS_NAME, 'callback', callback, 'function');
     const set = blockPermanenceToCallbackSet(type);
+    console.log(set);
     this[set].add(callback);
   }
 
@@ -194,19 +197,24 @@ export default class ChainwebEventService {
   _blockStep = async () => {
     if (this.state.unconfirmed.length) {
       for(const event of this.state.unconfirmed) {
+        const { meta: { confirmations: prevConfirmations } } = event;
         const permanence = await this._classifyEvent(event);
+        const { meta: { confirmations: nextConfirmations } } = event;
         if (permanence !== 'unconfirmed') {
           this.logger.verbose(event.requestKey, event.name, 'unconfirmed ->');
           this.state.remove('unconfirmed', event);
           this._add(event);
+        } else if (prevConfirmations !== nextConfirmations) {
+          this._executeCallbacks(this._updateConfirmationsCallbacks, event);
         }
-        // TODO could add a .confirmations field to unconfirmed events
-        // and stream confirmation changes as they happen
       }
     }
   }
 
   async _add(event) {
+    if (!event.meta?.id) {
+      addEventID(event);
+    }
     const permanence = await this._classifyEvent(event);
     validateBlockPermanence(permanence);
     const isNew = this.state.add(permanence, event);
@@ -223,11 +231,17 @@ export default class ChainwebEventService {
   async _classifyEvent(event) {
     const { height, chain, blockHash } = event;
     const lastChainHeight = this._cut.lastCut.hashes[chain].height;
-    if (lastChainHeight - height < CONFIRMATION_HEIGHT) {
+    event.meta.confirmations = Math.max(0, Math.min(CONFIRMATION_HEIGHT, lastChainHeight - height));
+    if (event.meta.confirmations < CONFIRMATION_HEIGHT) {
       return 'unconfirmed';
     }
     const isEventOrphaned = await isOrphan(event, this._cut.lastCut, this.logger);
-    return isEventOrphaned ? 'orphaned' : 'confirmed';
+    if (isEventOrphaned) {
+      event.meta.confirmations = 0;
+      event.meta.orphaned = true;
+      return 'orphaned';
+    }
+    return 'confirmed';
   }
 
   async _executeCallbacks(callbackSet, data) {
@@ -245,4 +259,13 @@ export default class ChainwebEventService {
       }
     }
   }
+}
+
+function addEventID(event) {
+  const { blockTime, meta, ...eventHash } = event;
+  const eventHashStr = JSON.stringify(eventHash);
+  const id = createHash('md5').update(eventHashStr).digest('hex');
+  event.meta = event.meta ?? {};
+  event.meta.id = id;
+  return;
 }
