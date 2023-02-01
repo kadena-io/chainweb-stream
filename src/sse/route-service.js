@@ -6,7 +6,7 @@ import ChainwebCutService from './chainweb-cut.js';
 let cut;
 
 const defaultLimit = 25;
-const maxLimit = 100;
+const maxLimit = 10000;
 
 /*
  * Singleton service for SSE routing event filter requests
