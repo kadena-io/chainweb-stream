@@ -7,6 +7,7 @@ const availableModules = {
   'coin': 'coin',
   // 'marmalade': 'marmalade.ledger',
   'free.klaim': 'free.klaim',
+  'free.klaim.KLAIM': 'free.klaim.KLAIM',
   'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim': 'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim',
   'klaim': 'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim',
 };
