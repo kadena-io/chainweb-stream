@@ -5,7 +5,9 @@ import RouteService from './route-service.js';
 
 const availableModules = {
   'coin': 'coin',
-  'marmalade': 'marmalade.ledger',
+  // 'marmalade': 'marmalade.ledger',
+  'free.klaim-raffle': 'free.klaim-raffle',
+  'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim': 'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim',
   'klaim': 'n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.klaim',
 };
 
