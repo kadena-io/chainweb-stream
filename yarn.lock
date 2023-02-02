@@ -2105,8 +2105,8 @@
     "jest-matcher-utils" "^27.5.1"
     "jest-message-util" "^27.5.1"
 
-"express-sse@github:Takadenoshi/express-sse":
-  "resolved" "git+ssh://git@github.com/Takadenoshi/express-sse.git#100238dc2e3e03de44d1e852d227105e2b3b4d7b"
+"express-sse@github:Takadenoshi/express-sse#0.0.2":
+  "resolved" "git+ssh://git@github.com/Takadenoshi/express-sse.git#8efceb31782595dd7c85fa05bfe461e4ece82c3a"
   "version" "0.5.3"
 
 "express@^4.17.3":

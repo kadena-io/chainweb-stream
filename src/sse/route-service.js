@@ -30,7 +30,7 @@ export default class RouteService {
     this.filter = filter;
     this.sse = new SSE(
       [], // This produces [[]], can we make it send [] ? 
-      { initialEvent: 'initial' },
+      { initialEvent: 'initial', pingInterval: 15_000 },
     );
     if (!cut) {
       cut = new ChainwebCutService();
