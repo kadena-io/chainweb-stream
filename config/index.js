@@ -28,6 +28,7 @@ const DEFAULT_KEYS = {
   HTTP_MAX_RETRIES: ['httpMaxRetries', 2000],
   HTTP_MAX_RETRIES: ['httpMaxRetries', 2000],
   ESTATS_CHAINWEB_HOST: ['estatsChainwebHost', ''],
+  REDIS_HOST: ['redisHost', 'localhost:6379'],
   REDIS_PASSWORD: ['redisPassword', ''],
   LOG: ['log', 'verbose'], // TODO change before prod
   CONFIRMATION_HEIGHT: ['confirmationHeight', 6],

@@ -27,11 +27,11 @@ const logger = new Logger('Redis');
 
 export async function connect(runtimeConfig) {
   const config = defaults(runtimeConfig, defaultConfig);
-  const { redisPassword } = config;
+  const { redisHost, redisPassword } = config;
   network = config.network;
 
   const redisOptions = {
-    // TODO hhost, port, etc
+    url: `redis://${redisHost}`,
     socket: {
       reconnectStrategy: n => {
         if (n >= MAX_REDIS_FAILURES) {
