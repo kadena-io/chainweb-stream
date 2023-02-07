@@ -172,7 +172,7 @@ export default class ChainwebEventService {
         type: this._type,
         filter: this._filter,
         limit: 100,
-        totalLimit: 100,
+        totalLimit: 10000,
         moduleHashBlacklist,
         minHeight: this._minHeight,
         callback: addEvents,
