@@ -1,5 +1,5 @@
 import { config } from '../../config/index.js';
-import { isOrphan, deleteOrphanEventsFromCache } from './orphans.js';
+import { isOrphan } from './orphans.js';
 import { getChainwebCut } from './chainweb-node.js';
 import RouteService from './route-service.js';
 

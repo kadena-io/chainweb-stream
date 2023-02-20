@@ -1,11 +1,20 @@
-import fetch, { Headers } from 'node-fetch';
+import fetch, { Headers, RequestInit } from 'node-fetch';
 import { config } from '../../config/index.js';
 import { sleep } from './utils.js';
+import Logger from './logger';
 
 const { httpMaxRetries, httpRetryBackoffStep } = config;
 
-export async function fetchWithRetry(url, opts = {}, tries = 0) {
-  const { logger = console, ...fetchOpts } = opts ?? {};
+interface FetchWithRetryOptions extends RequestInit {
+  logger?: Logger;
+}
+
+export async function fetchWithRetry(url: string, opts: FetchWithRetryOptions = {}, tries = 0) {
+  const {
+    logger = new Logger('Fetch'),
+    ...fetchOpts
+  } = opts ?? {};
+
   try {
     const method = opts?.method ?? 'GET';
     logger.debug(`${method} ${url}${tries ? ` [Retries: ${tries}]` : ''}`);
@@ -33,7 +42,7 @@ export async function fetchWithRetry(url, opts = {}, tries = 0) {
   }
 }
 
-export async function postData(url = '', data = {}, logger = console) {
+export async function postData(url = '', data = {}, logger = new Logger()) {
   const headers = new Headers({
     'Content-Type': 'application/json',
     accept: 'application/json;blockheader-encoding=object',
@@ -41,8 +50,8 @@ export async function postData(url = '', data = {}, logger = console) {
 
   const response = await fetchWithRetry(url, {
     method: 'POST',
-    mode: 'no-cors',
-    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+    // mode: 'no-cors',
+    // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
     headers,
     redirect: 'follow',
     referrerPolicy: 'no-referrer',

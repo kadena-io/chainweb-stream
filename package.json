@@ -7,11 +7,12 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=0.10.3 <15"
+    "node": ">=12"
   },
   "scripts": {
     "start": "node ./index.js",
     "dev": "nodemon ./index.js",
+    "build": "tsc",
     "lint": "npx eslint ./src",
     "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --silent .",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
@@ -35,6 +36,7 @@
     "redis": "^4.3.0"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.6.2",
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",

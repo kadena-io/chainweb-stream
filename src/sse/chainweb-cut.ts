@@ -1,19 +1,20 @@
 import Logger from './logger.js';
 import { config as defaultConfig } from '../../config/index.js';
-import { validateDefined, validateType } from './types.js';
+import { ChainwebCutData, ChainwebCutCallback, validateDefined, validateType } from './types';
 import { getResponse, fetchWithRetry, postData } from './http.js';
 
 const CLASS_NAME = 'ChainwebCutService'
 
 export default class ChainwebCutService {
-  lastCut;
+  logger = new Logger('CutService');
+  lastCut: ChainwebCutData;
   lastUpdateTime;
   running = false;
 
   _config;
   _updateInterval;
   _intervalId;
-  _updateCallbacks = new Set();
+  _updateCallbacks = new Set<ChainwebCutCallback>();
 
   constructor(config = defaultConfig) {
     this.logger = new Logger('CutService');
@@ -66,7 +67,7 @@ export default class ChainwebCutService {
     for(const callback of this._updateCallbacks) {
       try {
         const res = callback(data);
-        if (res?.then) {
+        if (res && typeof res.then === 'function') {
           // TODO if the promise never resolves we get stuck here
           // await with timeout? 
           // or not await at all?
@@ -92,10 +93,10 @@ export default class ChainwebCutService {
     this._executeCallbacks(this.lastCut);
   }
 
-  async _getCut(logger) {
+  async _getCut(logger = this.logger) {
     const { chainwebHost, network } = this._config;
     const url = `${chainwebHost}/chainweb/0.0/${network}/cut`;
-    const rawResponse = await fetchWithRetry(url, { logger: logger ?? this.logger });
+    const rawResponse = await fetchWithRetry(url, { logger });
     const response = await getResponse(rawResponse);
     return response;
   }

@@ -1,6 +1,7 @@
 import { getResponse, fetchWithRetry, postData } from './http.js';
 import { summarizeChainwebCut } from './utils.js';
 import { config } from '../../config/index.js';
+import Logger from './logger';
 
 const { chainwebHost, network } = config;
 
@@ -20,7 +21,7 @@ function makeBlockHeaderCacheKey(chain, hash, height) {
   return `${chain}:${height}:${hash}`
 }
 
-export async function getBlockHeaderBranch({ chain, hash, height, limit = 10, logger = console }) {
+export async function getBlockHeaderBranch({ chain, hash, height, limit = 10, logger = new Logger('getBlockHeaderBranch') }) {
   if (!hash) {
     const cut = await getChainwebCut();
     hash = cut.hashes[chain].hash;

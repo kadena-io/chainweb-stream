@@ -6,6 +6,14 @@ import {
   setRedisConfirmedEvents,
   setRedisOrphanedEvents,
 } from './redis/index.js';
+import { TransactionType, GenericData } from './types';
+import Logger from './logger';
+
+interface GetEventOptions {
+  minHeight?: number;
+  maxHeight?: number;
+  limit?: number;
+}
 
 function heightSorter(a, b) {
   // sort high to low heights
@@ -39,9 +47,13 @@ function presentEvents(sources, options) {
 }
 
 export default class ChainwebEventServiceState {
-  unconfirmed = []
-  confirmed = []
-  orphaned = []
+  _type: TransactionType;
+  _filter: string;
+  logger: Logger;
+
+  unconfirmed: GenericData[] = []
+  confirmed: GenericData[] = []
+  orphaned: GenericData[] = []
 
   constructor({ type, filter, logger }) {
     this._type = type;
@@ -76,21 +88,21 @@ export default class ChainwebEventServiceState {
     return `confirmed=${this.confirmed.length} unconfirmed=${this.unconfirmed.length} orphaned=${this.orphaned.length}`;
   }
 
-  getAllEvents({ minHeight, maxHeight, limit } = {}) {
+  getAllEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}) {
     return presentEvents(
       [this.unconfirmed, this.confirmed, this.orphaned],
       { minHeight, maxHeight, limit, sort: true },
     );
   }
 
-  getConfirmedEvents({ minHeight, maxHeight, limit } = {}) {
+  getConfirmedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}) {
     return presentEvents(
       [this.confirmed],
       { minHeight, maxHeight, limit, sort: false },
     );
   }
 
-  getOrphanedEvents({ minHeight, maxHeight, limit } = {}) {
+  getOrphanedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}) {
     return presentEvents(
       [this.orphaned],
       { minHeight, maxHeight, limit, sort: false },

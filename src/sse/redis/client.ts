@@ -25,7 +25,7 @@ let network;
 
 const logger = new Logger('Redis');
 
-export async function connect(runtimeConfig) {
+export async function connect(runtimeConfig = {}) {
   const config = defaults(runtimeConfig, defaultConfig);
   const { redisHost, redisPassword } = config;
   network = config.network;

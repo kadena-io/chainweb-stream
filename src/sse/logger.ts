@@ -41,14 +41,28 @@ export function setLevel(newLevel) {
 }
 
 export default class Logger {
+  prefix = '';
   constructor(...prefixes) {
     if (prefixes.length) {
       this.prefix = prefixes.map(word => `[${word}]`).join(' ');
     }
-    for(const [from, to] of Object.entries(logLevelMappings)) {
-      this[from] = (...args) => {
-        npmlog[to](this.prefix, ...args);
-      }
-    }
+  }
+  silly(...args) {
+    npmlog.silly(this.prefix, ...args);
+  }
+  verbose(...args) {
+    npmlog.verbose(this.prefix, ...args);
+  }
+  debug(...args) {
+    npmlog.verbose(this.prefix, ...args);
+  }
+  log(...args) {
+    npmlog.info(this.prefix, ...args);
+  }
+  warn(...args) {
+    npmlog.warn(this.prefix, ...args);
+  }
+  error(...args) {
+    npmlog.error(this.prefix, ...args);
   }
 }

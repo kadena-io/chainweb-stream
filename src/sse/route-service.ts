@@ -2,6 +2,7 @@ import SSE from 'express-sse';
 import ChainwebEventService from './chainweb-event.js';
 import Logger from './logger.js';
 import ChainwebCutService from './chainweb-cut.js';
+import { TransactionType } from './types';
 
 let cut;
 
@@ -18,6 +19,10 @@ function concatTypeFilter(type, filter) {
 }
 
 export default class RouteService {
+  type: TransactionType;
+  filter: string;
+  logger: Logger;
+
   inited = false;
   eventService = null;
   sse = null;
@@ -89,17 +94,18 @@ export default class RouteService {
     this.eventService.stop()
     delete existing[concatTypeFilter(this.type, this.filter)];
   }
+
+  static get(type, filter) {
+    return existing[concatTypeFilter(type, filter)] ?? new RouteService({ type, filter })
+  }
+
+  static route(type, filter) {
+    return RouteService.get(type, filter).route;
+  }
+
 }
 
-RouteService.get = (type, filter) => {
-  return existing[concatTypeFilter(type, filter)] ?? new RouteService({ type, filter })
-}
-
-RouteService.route = (type, filter) => {
-  return RouteService.get(type, filter).route;
-}
-
-function parseParam(value, defaultValue) {
+function parseParam(value, defaultValue = 0) {
   if (!value) {
     return defaultValue;
   }

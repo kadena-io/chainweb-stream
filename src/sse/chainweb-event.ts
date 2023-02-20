@@ -5,6 +5,8 @@ import {
   validateType,
   validateBlockPermanence,
   validateInstanceOf,
+  TransactionType,
+  BlockPermanenceState,
 } from './types.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { syncEventsFromChainwebData } from './chainweb-data.js';
@@ -21,20 +23,32 @@ const {
 } = config;
 
 function blockPermanenceToCallbackSet(blockPermanence) {
-  validateBlockPermanence(blockPermanence);
+  validateBlockPermanence(blockPermanence as BlockPermanenceState);
   return `_${blockPermanence}Callbacks`;
 }
 
+interface ChainwebEventServiceConstructor {
+  type: TransactionType;
+  filter: string;
+  cut: ChainwebCutService;
+  minHeight?: number;
+  limit?: number;
+}
+
 export default class ChainwebEventService {
-  state;              // contains events[]: unconfirmed, confirmed, orphaned
+  state: State;              // contains events[]: unconfirmed, confirmed, orphaned
+  logger: Logger;
+  _type: TransactionType;
 
   running = false     // running state
   lastUpdateTime;
 
   _filter = null      // chainweb-data filter for this service, e.g "marmalade." or "coin."
   _minHeight = null  // last seen height
+  _limit = 100;
+  
 
-  _cut                // ChainwebCut service
+  _cut: ChainwebCutService  // ChainwebCut service
 
   // callbacks for: confirmed/unconfirmed/orphaned events
   _confirmedCallbacks = new Set()
@@ -42,7 +56,7 @@ export default class ChainwebEventService {
   _updateConfirmationsCallbacks = new Set()
   _orphanedCallbacks = new Set()
 
-  constructor({ type, filter, minHeight, cut }) {
+  constructor({ type, filter, minHeight, cut, limit }: ChainwebEventServiceConstructor) {
     const logPrefix = filter.endsWith('.') ? filter.slice(0, filter.length - 1) : filter;
     this.logger = new Logger('EventService', logPrefix);
 
@@ -50,6 +64,9 @@ export default class ChainwebEventService {
     this._type = type;
     // TODO validate event type IF we keep this for multiple types, e.g. account & module
     this._filter = filter;
+    if (limit) {
+      this._limit = limit;
+    }
     this.state = new State({ type, filter, logger: this.logger, });
 
     if (minHeight) {
@@ -139,7 +156,7 @@ export default class ChainwebEventService {
     await this.state.load();
     this._calcLastHeight();
     // TODO minHeight improve?
-    this.logger.info(`Loaded state minHeight=${this._minHeight} ${this.state.summary}`);
+    this.logger.log(`Loaded state minHeight=${this._minHeight} ${this.state.summary}`);
   }
 
   /*
@@ -216,7 +233,7 @@ export default class ChainwebEventService {
       addEventID(event);
     }
     const permanence = await this._classifyEvent(event);
-    validateBlockPermanence(permanence);
+    validateBlockPermanence(permanence as BlockPermanenceState);
     const isNew = this.state.add(permanence, event);
     if (!isNew) {
       return false;

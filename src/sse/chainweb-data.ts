@@ -4,18 +4,21 @@ import { fetchWithRetry, getResponse } from './http.js';
 import { config } from '../../config/index.js';
 import { filterBlackListItems } from './utils.js';
 import { isUndefined } from './types.js';
+import Logger from './logger';  
 
 const { dataHost } = config;
 
-export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 50, next = undefined, logger = console) {
+export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 50, next = undefined, logger = new Logger('getChainwebDataEvents')) {
   const isAccount = endpoint.startsWith('account/');
 
-  const params = new URLSearchParams({
+  const paramObject = {
     ...(name ? { name } : null),
     ...(minHeight ? { minheight: minHeight } : null),
     ...(next ? { next } : null),
     limit,
-  });
+  };  
+  const params = new URLSearchParams(Object.entries(paramObject));
+
   const url = `${dataHost}/txs/${endpoint}?${params}`;
 
   const timeStart = Date.now();
@@ -30,7 +33,7 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
     return { response: [], }; // TODO should this throw
   }
 
-  logger.verbose(`${url} ${rawRes.status} responseLength=${response.length} in ${elapsed} ms`);
+  logger.debug(`${url} ${rawRes.status} responseLength=${response.length} in ${elapsed} ms`);
 
   return { response, next: nextNext };
 }
@@ -45,6 +48,15 @@ function getEndpointParams(type, filter) {
   }
 }
 
+interface SyncEventsOptions {
+  type?: 'events' | 'accounts';
+  limit?: number;
+  totalLimit?: number;
+  minHeight?: number;
+  moduleHashBlacklist?: string[];
+  callback?: () => {}; // TODO
+}
+
 const syncEventsFromChainwebDataDefaults = {
   type: 'events',
   limit: 50,
@@ -52,7 +64,7 @@ const syncEventsFromChainwebDataDefaults = {
   totalLimit: 100,
 }
 
-export async function syncEventsFromChainwebData(opts, logger=console) {
+export async function syncEventsFromChainwebData(opts, logger = new Logger(syncEventsFromChainwebData)) {
   const {
     type,
     filter,
@@ -91,13 +103,13 @@ export async function syncEventsFromChainwebData(opts, logger=console) {
   } catch(e) {
   }
 
-  logger.verbose('sync fetch finished. awaiting result processors', completedResults.length);
+  logger.debug('sync fetch finished. awaiting result processors', completedResults.length);
   try {
     await Promise.all(resultPromises);
   } catch(e) {
     logger.warn("Callback error:", e);
   }
-  logger.verbose('sync finished.');
+  logger.debug('sync finished.');
 
   return completedResults;
 }
