@@ -1,6 +1,6 @@
-import { getBlockHeaderBranch } from './chainweb-node';
-import Logger from './logger';
-import { ChainwebCutData, ChainwebBaseData } from './types';
+import { getBlockHeaderBranch } from './chainweb-node.js';
+import Logger from './logger.js';
+import { ChainwebCutData, ChainwebBaseData } from './types.js';
 
 export async function isOrphan({ chain, height, blockHash }: ChainwebBaseData, chainwebCut: ChainwebCutData, logger: Logger) {
 

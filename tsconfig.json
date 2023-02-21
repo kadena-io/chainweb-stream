@@ -1,10 +1,21 @@
 {
   "compilerOptions": {
+    "lib": [
+      "ESNext"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "./build",
-    "allowJs": true,
-    "target": "es5",
+    "allowJs": false,
+    "target": "ES2021",
     "skipLibCheck": true,
     "downlevelIteration": true,
+    "esModuleInterop": true,
+    "rootDir": "./src"
+  },
+  "ts-node": {
+    "files": true,
+    "esm": true
   },
   "include": ["./src/**/*"]
 }

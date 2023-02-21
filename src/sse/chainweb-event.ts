@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import Logger from './logger';
+import Logger from './logger.js';
 import {
   validateDefined,
   validateType,
@@ -7,12 +7,12 @@ import {
   validateInstanceOf,
   TransactionType,
   BlockPermanenceState,
-} from './types';
-import ChainwebCutService from './chainweb-cut';
-import { syncEventsFromChainwebData } from './chainweb-data';
-import config from '../config/index';
-import State from './chainweb-event-state';
-import { isOrphan } from './orphans';
+} from './types.js';
+import ChainwebCutService from './chainweb-cut.js';
+import { syncEventsFromChainwebData } from './chainweb-data.js';
+import config from '../config/index.js';
+import State from './chainweb-event-state.js';
+import { isOrphan } from './orphans.js';
 
 const CLASS_NAME = 'ChainwebEventService'
 

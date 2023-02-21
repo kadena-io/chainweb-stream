@@ -3,8 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import config from './config/index';
-import { router } from './routes/sse.routes';
+import config from './config/index.js';
+import { router } from './routes/sse.routes.js';
 
 const { port } = config;
 const app = express();

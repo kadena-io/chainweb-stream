@@ -46,3 +46,5 @@
 [ ] not sending [] when there aren't events to be found
 
 [ ] unregistering event not found (?)
+
+[] enforce allow-Origin, add to config

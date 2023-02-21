@@ -1,7 +1,7 @@
-import Logger from './logger';
-import defaultConfig from '../config/index';
-import { ChainwebCutData, ChainwebCutCallback, validateDefined, validateType } from './types';
-import { getResponse, fetchWithRetry, postData } from './http';
+import Logger from './logger.js';
+import defaultConfig from '../config/index.js';
+import { ChainwebCutData, ChainwebCutCallback, validateDefined, validateType } from './types.js';
+import { getResponse, fetchWithRetry, postData } from './http.js';
 
 const CLASS_NAME = 'ChainwebCutService'
 

@@ -1,10 +1,10 @@
 import { writeFileSync } from 'fs';
 import defaults from 'lodash/defaults.js'
-import { fetchWithRetry, getResponse } from './http';
-import config from '../config/index';
-import { filterBlackListItems } from './utils';
-import { isUndefined } from './types';
-import Logger from './logger';  
+import { fetchWithRetry, getResponse } from './http.js';
+import config from '../config/index.js';
+import { filterBlackListItems } from './utils.js';
+import { isUndefined } from './types.js';
+import Logger from './logger.js';  
 
 const { dataHost } = config;
 

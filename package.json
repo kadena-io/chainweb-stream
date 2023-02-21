@@ -2,17 +2,17 @@
   "name": "chainweb-sse",
   "version": "0.0.1",
   "main": "src/server.js",
+  "type": "module",
   "private": false,
   "author": "Will Martino <1953196+buckie@users.noreply.github.com>",
   "license": "MIT",
-  "type": "module",
   "engines": {
     "node": ">=12"
   },
   "scripts": {
-    "start": "node ./index.js",
-    "dev": "nodemon ./index.js",
+    "start": "ts-node ./src/index.ts",
     "build": "tsc",
+    "build:watch": "tsc -w",
     "lint": "npx eslint ./src",
     "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --silent .",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
@@ -33,7 +33,9 @@
     "node-fetch": "^3.2.3",
     "npmlog": "^7.0.1",
     "pact-lang-api": "^4.3.3",
-    "redis": "^4.3.0"
+    "redis": "^4.3.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.2",
