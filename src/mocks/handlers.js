@@ -1,6 +1,6 @@
 import { rest } from 'msw';
 import blocks, { updateData, cut, blockHeaderBranch } from './mockdata/chainweb';
-import { config } from '../../config/index.js';
+import config from '../config/index';
 
 const { dataHost, chainwebHost, network, } = config;
 let count = 0;

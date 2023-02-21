@@ -1,7 +1,7 @@
 import express from 'express';
-import { eventRoute, accountRoute } from '../sse/index.js';
-import { getRedisConfirmedEvents, clearRedis } from '../sse/redis/index.js';
-import { config } from '../../config/index.js';
+import { eventRoute, accountRoute } from '../sse/index';
+import { getRedisConfirmedEvents, clearRedis } from '../sse/redis/index';
+import config from '../config/index';
 
 export const router = express.Router();
 

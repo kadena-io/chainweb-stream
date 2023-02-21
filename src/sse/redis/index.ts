@@ -6,8 +6,8 @@ import {
   KEY_SUFFIX_UNCONFIRMED,
   KEY_SUFFIX_ORPHANED,
   KEY_SUFFIX_LAST_STATE,
-} from './client.js';
-import { TransactionType, GenericData, validateType } from '../types.js';
+} from './client';
+import { TransactionType, GenericData, validateType } from '../types';
 
 function makeKey(base, type: TransactionType, suffix) {
   validateType('REDIS', 'type', type, 'string');

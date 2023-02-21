@@ -1,4 +1,4 @@
-import { getBlockHeaderBranch } from './chainweb-node.js';
+import { getBlockHeaderBranch } from './chainweb-node';
 import Logger from './logger';
 import { ChainwebCutData, ChainwebBaseData } from './types';
 

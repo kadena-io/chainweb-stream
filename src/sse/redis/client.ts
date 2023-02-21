@@ -1,7 +1,7 @@
-import Logger from '../logger.js';
+import Logger from '../logger';
 import defaults from 'lodash/defaults.js';
-import { config as defaultConfig } from '../../../config/index.js';
-import { withRetries } from '../utils.js';
+import defaultConfig from '../../config/index';
+import { withRetries } from '../utils';
 import { createClient } from 'redis';
 
 const MAX_REDIS_FAILURES = 5; // TODO set via getter/setter and default from config?

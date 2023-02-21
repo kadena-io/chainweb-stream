@@ -1,7 +1,7 @@
-import Logger from './logger.js';
-import { config as defaultConfig } from '../../config/index.js';
+import Logger from './logger';
+import defaultConfig from '../config/index';
 import { ChainwebCutData, ChainwebCutCallback, validateDefined, validateType } from './types';
-import { getResponse, fetchWithRetry, postData } from './http.js';
+import { getResponse, fetchWithRetry, postData } from './http';
 
 const CLASS_NAME = 'ChainwebCutService'
 
@@ -18,12 +18,9 @@ export default class ChainwebCutService {
 
   constructor(config = defaultConfig) {
     this.logger = new Logger('CutService');
-    const { chainwebHost, network, updateInterval = 15_000 } = config;
-    validateDefined(CLASS_NAME, 'chainwebHost', chainwebHost);
-    validateDefined(CLASS_NAME, 'network', network);
-    validateType(CLASS_NAME, 'updateInterval', updateInterval, 'number');
+    const { chainwebHost, network, chainwebCutUpdateInterval } = config;
     this._config = { chainwebHost, network };
-    this._updateInterval = updateInterval;
+    this._updateInterval = chainwebCutUpdateInterval;
   }
 
   async start() {

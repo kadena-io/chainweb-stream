@@ -1,6 +1,6 @@
-import fetch, { Headers, RequestInit } from 'node-fetch';
-import { config } from '../../config/index.js';
-import { sleep } from './utils.js';
+import { default as fetch, Headers, RequestInit } from 'node-fetch';
+import config from '../config/index';
+import { sleep } from './utils';
 import Logger from './logger';
 
 const { httpMaxRetries, httpRetryBackoffStep } = config;
