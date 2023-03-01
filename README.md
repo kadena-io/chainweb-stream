@@ -1,21 +1,23 @@
 # Chainweb SSE
 
-Streaming service utilizing server-sent-events to stream specific events, as well as updates to them.
+Streaming service utilizing server-sent-events to stream chainweb transfers or, as well as their confirmation depth updates.
+
+The base payload matches the Chainweb-Data data structures in [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) and [/txs/account](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/TransferDetail.hs#L14) with the addition of some [metadata](#meta).
 
 ## Status
 
-Proof-of-concept / Alpha version
+Alpha version / unstable.
 
 ## Setup
 
 CW-SSE currently requires a local redis client to cache results.
 
-Configuration via environment variables is required. Copy the `.default.env` file into `.env` and replace the `REDIS_PASSWORD` value with your redis password. It assumes a localhost redis on the default port.
+Configuration via environment variables or dotenv file is required. Copy the `.default.env` file into `.env` and set at least the `NETWORK`, `DATA_HOST` and `CHAINWEB_HOST` values.
 
 ```
 npm i
 cp .default.env .env
-# EDIT .env with the correct REDIS_PASSWORD
+# EDIT .env with the appropriate values
 ```
 
 ## Run
@@ -24,31 +26,98 @@ cp .default.env .env
 npm run start
 ```
 
-Note: It currently waits for a request before syncing events from cw-data. This will likely change.
+Note: It currently waits for a request before syncing events from cw-data.
+
+## Wire protocol (unstable)
+
+Three kinds of events are sent over the wire:
+
+### Initial load   ("initial")
+
+Sent upon initialization _if_ there are cached results to send immediately, otherwise omitted.
+
+Payload is an array of events/transfers. See Routes below for payload definitions.
+
+```
+id: 1
+event: initial
+data: [{payload}, {payload}]
+```
+
+### Heartbeats ("ping")
+
+Sent every 25 seconds by default (configurable with `HEARTBEAT_INTERVAL` in ms)
+
+Useful for detecting stale connections from the client and to keep alive the connection through load balancers or proxies when there is no other data.
+
+```
+id: 10
+event: ping 
+data: ""
+```
+
+### Data 
+
+For new or updated data. No event name (default message callback).
+
+Payload is single event/transfer.
+
+```
+id: 42
+data: {payload}
+```
 
 ## Module/Event Routes
 
-These are not final but for now we support two types of streaming module/event routes:
+`/stream/event/[EVENT_NAME]`
+
+To stream events module-wide (coin) or specific events (coin.TRANSFER)
+
+Two endpoints are currently white listed:
 
 `/stream/event/coin`
 
-and
-
 `/stream/event/marmalade`
 
-These will stream all *confirmed* events as they happen, according to the CONFIRMATION_HEIGHT env var (default 6.)
+You can change this in `src/sse/index.ts`
+
+The payload matches the Chainweb-Data [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) API response, with the `.meta` additions as documented below. 
+
+## Account Route
+
+`/stream/account/[ACCOUNT]`
+
+To stream account transfers.
+
+The payload matches the Chainweb-Data [/txs/account](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/TransferDetail.hs#L14) API response, with the `.meta` additions as documented below.
+
+## Payload addition: `.meta` 
+
+CW-SSE streams event confirmations as they happen, up to the maximum (configurable) `CONFIRMATION_HEIGHT` (default 6).
+
+Each streamed payload includes a `.meta` structure as follows:
+
+```
+"meta": {
+  "id": string
+  "confirmations": number
+}
+```
+
+The `id` field is independent of block-specific values, so an event will have the same ID if it exists on two forks. You can use this to deduplicate new data events from confirmation-updating events.
 
 ## Example Use
 
 ```
-$ curl http://localhost:3000/stream/event/marmalade\?limit=10
+# curl -s  'http://localhost:4000/stream/event/coin?limit=2'
 id: 0
 event: initial
-data: [{"blockTime":"2022-12-15T02:46:57.727902Z","height":3288066,"blockHash":"gwQWkewwpzAK0iRVvgRjcPZlNokANEAw7oOBLeWebPo","requestKey":"aea2i7mZQJclB46EBdS3hZ1N-fzs6VfJY3-tifLkJLQ","params":["t:Abd2 Test col0044 collection Staging Final:6",1],"name":"marmalade.ledger.SUPPLY","idx":6,"chain":8,"moduleHash":"ovxYn-4UNKoLxKFgxccjPM076lqZfuD3H89qvzqd0t0"},{"and so on":1}]
+data: [{"blockTime":"2023-03-01T12:23:25.564693Z","height":3508106,"blockHash":"O6kzghnwCe0BowtcymSRX8URP2kC_6zeRKb6OUdu3vE","requestKey":"<coinbase>","params":["","99cb7008d7d70c94f138cc366a825f0d9c83a8a2f4ba82c86c666e0ab6fecf3a",1.0265475],"name":"coin.TRANSFER","idx":0,"chain":9,"moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","meta":{"id":"2db40fabb613fe9e970af8b71d594f0e","confirmations":1}},{"blockTime":"2023-03-01T12:24:01.520663Z","height":3508106,"blockHash":"YZZgxM9SGjfh_-WKdsffeg1dI8j6APHB8aDM8aqnGyk","requestKey":"<coinbase>","params":["","k:e7f7130f359fb1f8c87873bf858a0e9cbc3c1059f62ae715ec72e760b055e9f3",1.0265475],"name":"coin.TRANSFER","idx":0,"chain":1,"moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","meta":{"id":"b02626c21b7dffe8a41ec5bccfd5d2f6","confirmations":0}}]
 
 id: 1
-event: update
-data: {"blockTime":"2022-12-15T02:46:57.727902Z","height":3288066,"blockHash":"gwQWkewwpzAK0iRVvgRjcPZlNokANEAw7oOBLeWebPo","requestKey":"aea2i7mZQJclB46EBdS3hZ1N-fzs6VfJY3-tifLkJLQ","params":["t:Abd2 Test col0044 collection Staging Final:6","k:431a0a02cdfd8eabb3b78789795818933f518c8de74c02666ec732457959b6a4",{"pred":"keys-all","keys":["431a0a02cdfd8eabb3b78789795818933f518c8de74c02666ec732457959b6a4"]}],"name":"marmalade.ledger.ACCOUNT_GUARD","idx":3,"chain":8,"moduleHash":"ovxYn-4UNKoLxKFgxccjPM076lqZfuD3H89qvzqd0t0"}
-```
+data: {"blockTime":"2023-03-01T12:23:55.929138Z","height":3508106,"blockHash":"qVppqo9ZadSM0RRI5IwDOJPkpWdDq0uH5SFHfItZ-5M","requestKey":"<coinbase>","params":["","k:e7f7130f359fb1f8c87873bf858a0e9cbc3c1059f62ae715ec72e760b055e9f3",1.0265475],"name":"coin.TRANSFER","idx":0,"chain":18,"moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","meta":{"id":"7632170d70ede166c783ffaa3e66f935","confirmations":6}}
 
-We are actively working on an `/account/` endpoint which will stream all account-related transactions & events.
+id: 2
+event: ping
+data: ""
+```
