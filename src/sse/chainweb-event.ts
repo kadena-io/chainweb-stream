@@ -18,7 +18,7 @@ const CLASS_NAME = 'ChainwebEventService'
 
 const {
   moduleHashBlacklist,
-  confirmationHeight: CONFIRMATION_HEIGHT,
+  confirmationDepth: CONFIRMATION_HEIGHT,
   eventsStepInterval: EVENTS_STEP_INTERVAL,
 } = config;
 

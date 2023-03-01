@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 type ConfigVars = 'network' | 'dataHost' | 'chainwebHost' |
-  'port' | 'redisHost' | 'redisPassword' | 'confirmationHeight' |
+  'port' | 'redisHost' | 'redisPassword' | 'confirmationDepth' |
   'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
   'log' | 'production' | 'moduleHashBlacklist';
 
@@ -48,8 +48,8 @@ const configSpec: ConfigSpecification[] = [
     defaultValue: '',
   },
   {
-    varName: 'confirmationHeight',
-    envName: 'CONFIRMATION_HEIGHT',
+    varName: 'confirmationDepth',
+    envName: 'CONFIRMATION_DEPTH',
     numeric: true,
     defaultValue: 6,
   },
@@ -120,7 +120,7 @@ interface Config {
   network: string;
   // with default values, numeric
   port: number;
-  confirmationHeight: number;
+  confirmationDepth: number;
   eventsStepInterval: number;
   heartbeatInterval: number;
   chainwebCutUpdateInterval: number;
