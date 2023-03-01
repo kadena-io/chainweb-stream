@@ -1,0 +1,30 @@
+version: '3'
+services:
+  cw-sse:
+    build: .
+    command: npm run start
+    env_file: .default.env
+    environment:
+      PORT: 3000
+      NETWORK: host
+      REDIS_URL: redis://redis_db:6379
+      LOCAL_APP_URL: http://localhost:3000
+    ports:
+     - mode: host
+       protocol: tcp
+       published: 443
+       target: 3000
+    networks:
+      - cw-sse-network
+
+  redis_db:
+    image: redis:alpine
+    ports:
+      - 6379
+    networks:
+      - cw-sse-network
+
+
+networks:
+  cw-sse-network:
+    driver: bridge

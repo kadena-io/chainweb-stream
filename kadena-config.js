@@ -16,55 +16,55 @@ BLOCKCHAIN CONFIGURATION FILE
 */
 
 //chain that contract lives on
-const chainId = "1";
+const chainId = '1'
 
 //id of network version
-const networkId = "testnet04";
+const networkId = 'testnet04'
 
 //network node
-const node = "api.testnet.chainweb.com";
+const node = 'api.testnet.chainweb.com'
 
 //data host
-const dataHost = "data.testnet.chainweb.com:8080";
+const dataHost = 'data.testnet.chainweb.com:8080'
 
 //unique contract name
-const hftNamespace = "marmalade";
-const hftContractName = "ledger";
-const hftConstants = {};
+const hftNamespace = 'marmalade'
+const hftContractName = 'ledger'
+const hftConstants = {}
 
 //unique contract name
-const manifestNamespace = "kip";
-const manifestContractName = "token-manifest";
-const manifestConstants = {};
+const manifestNamespace = 'kip'
+const manifestContractName = 'token-manifest'
+const manifestConstants = {}
 
 //unique contract name
-const gtpNamespace = "marmalade";
-const gtpContractName = "guard-token-policy";
-const gtpConstants = {};
+const gtpNamespace = 'marmalade'
+const gtpContractName = 'guard-token-policy'
+const gtpConstants = {}
 
 //unique contract name
-const fqpNamespace = "marmalade";
-const fqpContractName = "fixed-quote-policy";
-const fqpConstants = {};
+const fqpNamespace = 'marmalade'
+const fqpContractName = 'fixed-quote-policy'
+const fqpConstants = {}
 
 //unique contract name
-const fqrpNamespace = "marmalade";
-const fqrpContractName = "fixed-quote-royalty-policy";
-const fqrpConstants = {};
+const fqrpNamespace = 'marmalade'
+const fqrpContractName = 'fixed-quote-royalty-policy'
+const fqrpConstants = {}
 
 //unique gas station contract name
-const gasStationName = "memory-wall-gas-station";
+const gasStationName = 'memory-wall-gas-station'
 
 //chainweb api host
-const apiHost = `https://${node}`;
+const apiHost = `https://${node}`
 
 //pact api host to send requests
-const host = `https://${node}/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
+const host = `https://${node}/chainweb/0.0/${networkId}/chain/${chainId}/pact`
 
 //creation time for request
-const creationTime = () => Math.round(new Date().getTime() / 1000) - 15;
+export const creationTime = () => Math.round(new Date().getTime() / 1000) - 15
 
-const globalConfig = {
+export const globalConfig = {
   explorerURL: `https://explorer.chainweb.com/${networkId.slice(0, -2)}`,
   networkId: networkId,
   dataHost: dataHost,
@@ -78,10 +78,10 @@ const globalConfig = {
   //time a tx lives in mempool since creationTime
   ttl: 28800,
   //sender === gas payer of the transaction
-};
+}
 
 //JSON with all necessary blockchain call data
-const manifestAPI = {
+export const manifestAPI = {
   contractName: manifestContractName,
   gasStationName: gasStationName,
   namespace: manifestNamespace,
@@ -102,14 +102,14 @@ const manifestAPI = {
     ttl: 28800,
     //sender === gas payer of the transaction
     //  set to our gas station account defined in memory-wall-gas-station.pact
-    sender: "mw-free-gas",
+    sender: 'mw-free-gas',
     //nonce here doesnt matter since the tx will never have the same hash
-    nonce: "some nonce that doesnt matter",
+    nonce: 'some nonce that doesnt matter',
   },
-};
+}
 
 //JSON with all necessary blockchain call data
-const hftAPI = {
+export const hftAPI = {
   contractName: hftContractName,
   gasStationName: gasStationName,
   namespace: hftNamespace,
@@ -131,14 +131,13 @@ const hftAPI = {
     ttl: 28800,
     //sender === gas payer of the transaction
     //  set to our gas station account defined in memory-wall-gas-station.pact
-    sender: "mw-free-gas",
+    sender: 'mw-free-gas',
     //nonce here doesnt matter since the tx will never have the same hash
-    nonce: "some nonce that doesnt matter",
+    nonce: 'some nonce that doesnt matter',
   },
-};
+}
 
-
-const gtpAPI = {
+export const gtpAPI = {
   contractName: gtpContractName,
   gasStationName: gasStationName,
   namespace: gtpNamespace,
@@ -159,13 +158,13 @@ const gtpAPI = {
     ttl: 28800,
     //sender === gas payer of the transaction
     //  set to our gas station account defined in memory-wall-gas-station.pact
-    sender: "mw-free-gas",
+    sender: 'mw-free-gas',
     //nonce here doesnt matter since the tx will never have the same hash
-    nonce: "some nonce that doesnt matter",
+    nonce: 'some nonce that doesnt matter',
   },
-};
+}
 
-const fqpAPI = {
+export const fqpAPI = {
   contractName: fqpContractName,
   gasStationName: gasStationName,
   namespace: fqpNamespace,
@@ -186,13 +185,13 @@ const fqpAPI = {
     ttl: 28800,
     //sender === gas payer of the transaction
     //  set to our gas station account defined in memory-wall-gas-station.pact
-    sender: "mw-free-gas",
+    sender: 'mw-free-gas',
     //nonce here doesnt matter since the tx will never have the same hash
-    nonce: "some nonce that doesnt matter",
+    nonce: 'some nonce that doesnt matter',
   },
-};
+}
 
-const fqrpAPI = {
+export const fqrpAPI = {
   contractName: fqrpContractName,
   gasStationName: gasStationName,
   namespace: fqrpNamespace,
@@ -213,19 +212,13 @@ const fqrpAPI = {
     ttl: 28800,
     //sender === gas payer of the transaction
     //  set to our gas station account defined in memory-wall-gas-station.pact
-    sender: "mw-free-gas",
+    sender: 'mw-free-gas',
     //nonce here doesnt matter since the tx will never have the same hash
-    nonce: "some nonce that doesnt matter",
+    nonce: 'some nonce that doesnt matter',
   },
-};
+}
 
-const keyFormatter = (str) =>
-  str.replace(new RegExp("[A-Z]+","gm")," $&").replace(new RegExp("^[a-z]","gm"),k => k.toUpperCase());
-
-module.exports = { manifestAPI: manifestAPI,
-  hftAPI: hftAPI,
-  gtpAPI: gtpAPI,
-  fqpAPI: fqpAPI,
-  fqrpAPI: fqrpAPI,
-  globalConfig,
-  keyFormatter: keyFormatter }
+export const keyFormatter = (str) =>
+  str
+    .replace(new RegExp('[A-Z]+', 'gm'), ' $&')
+    .replace(new RegExp('^[a-z]', 'gm'), (k) => k.toUpperCase())

@@ -1,0 +1,86 @@
+ <!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Test</title>
+  <style>
+    .block {
+        padding: 5px;
+        margin: 5px;
+        border: 1px solid black;
+        word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <section id="main">
+    <header>
+      <h1>
+        Chainweaver Marmalade events
+      </h1>
+    </header>
+  </section>
+  <h2>Orphans</h2>
+  <section id="kdaorphans">
+
+  </section>
+  <h2>Events</h2>
+  <section id="kdaevents">
+
+  </section>
+
+<script>
+  const es = new EventSource('http://localhost:3000/stream');
+  const kdaOrphansSection = document.querySelector('#kdaorphans')
+  const kdaSection = document.querySelector('#kdaevents')
+
+  function updateDom(eventsArray, parentDOM) {
+    eventsArray.reverse().forEach((data) => {
+      const div = document.createElement('div');
+      div.classList.add('block');
+      div.innerHTML = JSON.stringify(data)
+      parentDOM.prepend(div)
+    })
+  }
+
+
+  function updateDomObject(eventsObject, parentDOM) {
+    console.log(eventsObject);
+    const div2 = document.createElement('div');
+
+    Object.keys(eventsObject).forEach((data) => {
+      const orphanObject = eventsObject[data];
+      const div = document.createElement('div');
+      div.classList.add('block');
+      div.innerHTML = JSON.stringify(orphanObject)
+      div2.appendChild(div)
+    })
+
+    parentDOM.innerHTML = div2.innerHTML;
+  }
+
+  es.addEventListener('k:init', function (event) {
+    updateDom(JSON.parse(event.data)[0].kdaEvents, kdaSection)
+    updateDomObject(JSON.parse(event.data)[0].orphans, kdaOrphansSection)
+  });
+
+  es.addEventListener('k:update', function (event) {
+    console.log('event k:update', JSON.parse(event.data))
+    updateDom(JSON.parse(event.data), kdaSection)
+  });
+
+  es.addEventListener('k:update:orphans', function (event) {
+    console.log('event k:update:orphans',  JSON.parse(event.data))
+    updateDomObject(JSON.parse(event.data), kdaOrphansSection)
+  });
+
+
+  es.addEventListener('k:error', function (event) {
+    console.log('event',  JSON.parse(event.data))
+    updateDomObject(JSON.parse(event.data), kdaOrphansSection)
+  });
+
+
+</script>
+</body>
+</html>
