@@ -1,11 +1,6 @@
 import { afterEach, expect, test } from '@jest/globals';
-import {
-  sse,
-  updateClient,
-  stopStreaming,
-  highestNonOrphanBlockheight,
-} from '../index.js';
-import { getRedisConfirmedEvents, getRedisOrphanEvents, } from '../redis.js';
+import { sse, updateClient, stopStreaming, highestNonOrphanBlockheight } from '../index.js';
+import { getRedisConfirmedEvents, getRedisOrphanEvents } from '../redis.js';
 import { server } from '../../mocks/server.js';
 import { cut } from '../../mocks/mockdata/chainweb.js';
 

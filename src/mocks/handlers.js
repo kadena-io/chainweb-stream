@@ -2,7 +2,7 @@ import { rest } from 'msw';
 import blocks, { updateData, cut, blockHeaderBranch } from './mockdata/chainweb';
 import config from '../config/index';
 
-const { dataHost, chainwebHost, network, } = config;
+const { dataHost, chainwebHost, network } = config;
 let count = 0;
 
 export const handlers = [
