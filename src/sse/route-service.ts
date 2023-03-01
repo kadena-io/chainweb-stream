@@ -3,6 +3,9 @@ import ChainwebEventService from './chainweb-event.js';
 import Logger from './logger.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { TransactionType } from './types.js';
+import config from '../config/index.js';
+
+const { heartbeatInterval } = config;
 
 let cut;
 
@@ -35,7 +38,7 @@ export default class RouteService {
     this.filter = filter;
     this.sse = new SSE(
       [], // This produces [[]], can we make it send [] ? 
-      { initialEvent: 'initial', pingInterval: 15_000 },
+      { initialEvent: 'initial', pingInterval: heartbeatInterval, },
     );
     if (!cut) {
       cut = new ChainwebCutService();

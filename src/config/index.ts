@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 type ConfigVars = 'network' | 'dataHost' | 'chainwebHost' |
   'port' | 'redisHost' | 'redisPassword' | 'confirmationHeight' |
-  'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
+  'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
   'log' | 'production' | 'moduleHashBlacklist';
 
 interface ConfigSpecification {
@@ -66,10 +66,16 @@ const configSpec: ConfigSpecification[] = [
     defaultValue: 6,
   },
   {
+    varName: 'heartbeatInterval',
+    envName: 'HEARTBEAT_INTERVAL',
+    numeric: true,
+    defaultValue: 25_000,
+  },
+  {
     varName: 'eventsStepInterval',
     envName: 'EVENTS_STEP_INTERVAL',
     numeric: true,
-    defaultValue: 30_000,
+    defaultValue: 10_000,
   },
   {
     varName: 'chainwebCutUpdateInterval',
@@ -116,6 +122,7 @@ interface Config {
   port: number;
   confirmationHeight: number;
   eventsStepInterval: number;
+  heartbeatInterval: number;
   chainwebCutUpdateInterval: number;
   httpMaxRetries: number;
   httpRetryBackoffStep: number;
