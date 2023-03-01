@@ -4,7 +4,7 @@ Streaming service utilizing server-sent-events to stream chainweb transfers & ev
 
 Tracks and streams transaction confirmation depth updates.
 
-The payloads match the Chainweb-Data API response for [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) and [/txs/account](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/TransferDetail.hs#L14) with the addition of some [metadata](#meta).
+The payloads match the Chainweb-Data API response for [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) and [/txs/account](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/TransferDetail.hs#L14) with the addition of some [metadata](#payload-addition-meta).
 
 ## Status
 
@@ -34,7 +34,7 @@ Note: It currently waits for a request before syncing events from cw-data.
 
 Three kinds of events are sent over the wire:
 
-### Initial load   ("initial")
+### Initial load ("initial")
 
 Sent upon initialization _if_ there are cached results to send immediately, otherwise omitted.
 
@@ -60,7 +60,7 @@ data: ""
 
 ### Data 
 
-For new or updated data. No event name (default message callback).
+For new or updated data. No event name (default message callback if you are consuming through EventSource).
 
 Payload is single event/transfer.
 
@@ -71,9 +71,9 @@ data: {payload}
 
 ## Module/Event Routes
 
-`/stream/event/[EVENT_NAME]`
+`/stream/event/[MODULE_OR_EVENT_NAME]`
 
-To stream events module-wide (coin) or specific events (coin.TRANSFER)
+To stream events module-wide (e.g. coin) or single event (e.g. coin.TRANSFER)
 
 Two endpoints are currently white listed:
 
@@ -83,7 +83,7 @@ Two endpoints are currently white listed:
 
 You can change this in `src/sse/index.ts`
 
-The payload matches the Chainweb-Data [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) API response, with the `.meta` additions as documented below. 
+The payload matches the Chainweb-Data [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) API response, with the `.meta` addition as documented below. 
 
 ## Account Route
 
@@ -95,7 +95,7 @@ The payload matches the Chainweb-Data [/txs/account](https://github.com/kadena-i
 
 ## Payload addition: `.meta` 
 
-CW-SSE streams event confirmations as they happen, up to the maximum (configurable) `CONFIRMATION_HEIGHT` (default 6).
+CW-SSE streams event confirmations as they happen, up to the maximum confirmation depth (default 6, configurable with `CONFIRMATION_DEPTH`).
 
 Each streamed payload includes a `.meta` structure as follows:
 
@@ -106,7 +106,7 @@ Each streamed payload includes a `.meta` structure as follows:
 }
 ```
 
-The `id` field is independent of block-specific values, so an event will have the same ID if it exists on two forks. You can use this to deduplicate new data events from confirmation-updating events.
+The `id` field is independent of block-specific values, so an event will have the same ID if it exists on two forks. You can use this to deduplicate, since events will be streamed multiple times if they are not confirmed yet.
 
 ## Example Use
 
