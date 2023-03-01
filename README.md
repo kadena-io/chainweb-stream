@@ -1,8 +1,10 @@
 # Chainweb SSE
 
-Streaming service utilizing server-sent-events to stream chainweb transfers or, as well as their confirmation depth updates.
+Streaming service utilizing server-sent-events to stream chainweb transfers & events.
 
-The base payload matches the Chainweb-Data data structures in [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) and [/txs/account](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/TransferDetail.hs#L14) with the addition of some [metadata](#meta).
+Tracks and streams transaction confirmation depth updates.
+
+The payloads match the Chainweb-Data API response for [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) and [/txs/account](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/TransferDetail.hs#L14) with the addition of some [metadata](#meta).
 
 ## Status
 
