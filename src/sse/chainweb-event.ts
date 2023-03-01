@@ -47,7 +47,6 @@ export default class ChainwebEventService {
   _minHeight = null  // last seen height
   _limit = 100;
   
-
   _cut: ChainwebCutService  // ChainwebCut service
 
   // callbacks for: confirmed/unconfirmed/orphaned events
@@ -96,7 +95,7 @@ export default class ChainwebEventService {
       await this._cut.start();
     }
     this.running = true;
-    this.logger.verbose(`Started with minHeight=${this._minHeight} cw=${JSON.stringify(this._cut.lastCut)}`);
+    this.logger.verbose(`Started with minHeight=${this._minHeight}`);
     try {
       await this._step();
     } catch(e) {
@@ -118,7 +117,6 @@ export default class ChainwebEventService {
     // if so, redact hostnames from errors
     validateType(CLASS_NAME, 'callback', callback, 'function');
     const set = blockPermanenceToCallbackSet(type);
-    console.log(set);
     this[set].add(callback);
   }
 
@@ -135,17 +133,13 @@ export default class ChainwebEventService {
   /*
    * Update minHeight
    */
-  async _calcLastHeight() {
-    // TODO IMPORTANT there is an edge case here where
-    // if chain=8 is +2 blocks ahead of chain=3
-    // we get an unconfirmed event from chain=8 and set minHeight + 1
-    // we never see an event from chain=3 at minHeight-1 or minHeight
-    // maybe check minHeight against confirmation height or Cut to see if we can move forward
-    // but that isn't a guarrantee that cw-data has actually caught up to that state
-    // we could always store lastSeenEvent - 2 as the minHeight and de-dupe
+  _calcLastHeight() {
+    // minHeight lagging behind by -3 is intentional:
+    // chains can currently be +/- 3 heights difference from each other
+    // so this guarrantees we don't miss events
     const lastEvent = this.state.unconfirmed[0] ?? this.state.confirmed[0] ?? this.state.orphaned[0];
     if (lastEvent) {
-      this._minHeight = lastEvent.height + 1;
+      this._minHeight = lastEvent.height - 3;
     }
   }
 
@@ -189,7 +183,7 @@ export default class ChainwebEventService {
         type: this._type,
         filter: this._filter,
         limit: 100,
-        totalLimit: 10000,
+        totalLimit: 1000,
         moduleHashBlacklist,
         minHeight: this._minHeight,
         callback: addEvents,
@@ -207,6 +201,7 @@ export default class ChainwebEventService {
     } catch(e) {
       this.logger.error(e);
     } finally {
+      this.logger.verbose(`Next data sync event in ${EVENTS_STEP_INTERVAL}`);
       setTimeout(this._step, EVENTS_STEP_INTERVAL)
     }
   }

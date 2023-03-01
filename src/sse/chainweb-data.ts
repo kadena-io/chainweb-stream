@@ -12,7 +12,7 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
   const isAccount = endpoint.startsWith('account/');
 
   const paramObject = {
-    ...(name ? { name } : null),
+    ...(!isAccount && name ? { name } : null),
     ...(minHeight ? { minheight: minHeight } : null),
     ...(next ? { next } : null),
     limit,
