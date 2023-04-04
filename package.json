@@ -13,6 +13,7 @@
     "start": "ts-node ./src/index.ts",
     "build": "tsc",
     "build:watch": "tsc -w",
+    "knip": "knip",
     "lint": "npx eslint ./src",
     "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --silent .",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
@@ -43,6 +44,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.5.1",
+    "knip": "^2.6.1",
     "lint-staged": "^11.0.0",
     "prettier": "2.6.2"
   },
