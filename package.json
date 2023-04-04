@@ -13,8 +13,9 @@
     "start": "ts-node ./src/index.ts",
     "build": "tsc",
     "build:watch": "tsc -w",
+    "format": "prettier -w ./src",
     "knip": "knip",
-    "lint": "npx eslint ./src",
+    "lint": "eslint ./src",
     "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --silent .",
     "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
     "test:watch": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --watch ."
@@ -43,15 +44,6 @@
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.5.1",
     "knip": "^2.6.1",
-    "lint-staged": "^11.0.0",
     "prettier": "2.6.2"
-  },
-  "lint-staged": {
-    "*.+(js|jsx|ts|tsx)": [
-      "eslint --fix"
-    ],
-    "*.+(js|jsx|ts|tsx|json|css|md|mdx)": [
-      "prettier --write"
-    ]
   }
 }
