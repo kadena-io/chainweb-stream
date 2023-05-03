@@ -16,6 +16,10 @@ CW-SSE currently requires a local redis client to cache results.
 
 Configuration via environment variables or dotenv file is required. Copy the `.default.env` file into `.env` and set at least the `NETWORK`, `DATA_HOST` and `CHAINWEB_HOST` values.
 
+`CHAINWEB_HOST` should point to a chainweb-node *service* host.
+
+`DATA_HOST` should point to a chainweb-data host.
+
 ```
 npm i
 cp .default.env .env

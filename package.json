@@ -26,7 +26,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
-    "express-sse": "github:Takadenoshi/express-sse#0.0.2",
+    "express-sse": "github:Takadenoshi/express-sse#0.0.4",
     "helmet": "^5.0.2",
     "lodash": "^4.17.21",
     "msw": "^0.39.2",

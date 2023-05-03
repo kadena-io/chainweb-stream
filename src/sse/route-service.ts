@@ -2,10 +2,10 @@ import SSE from 'express-sse';
 import ChainwebEventService from './chainweb-event.js';
 import Logger from './logger.js';
 import ChainwebCutService from './chainweb-cut.js';
-import { TransactionType } from './types.js';
+import { TransactionType, InitialEvent } from './types.js';
 import config from '../config/index.js';
 
-const { heartbeatInterval } = config;
+const { network, confirmationDepth, heartbeatInterval } = config;
 
 let cut;
 
@@ -54,7 +54,7 @@ export default class RouteService {
   async init() {
     // resolve when enough data is available
     await this.eventService.init();
-    // TODO handle limit depth
+    // TODO handle limit depth?
     this.eventService.start() // not awaiting intentionally
     this.inited = true;
   }
@@ -69,20 +69,26 @@ export default class RouteService {
     // TODO handle limit intelligently - wait if we haven't reached that yet, etc
     // this is needed regardless to refresh initial data send to the latest data
     // TODO handle different permanence parameters, eg ?permanence=confirmed or =all 
-    this.sse.updateInit(
-      this.eventService.state.getAllEvents({ limit, minHeight }),
-    );
+    const initialEvent: InitialEvent = {
+      config: {
+        network,
+        type: this.type,
+        id: this.filter,
+        maxConf: confirmationDepth,
+        heartbeat: heartbeatInterval,
+        v:  '0.0.2',
+      },
+      data: this.eventService.state.getAllEvents({ limit, minHeight }),
+    };
+    this.sse.updateInit(initialEvent);
 
     req.on('close', () => {
       this.connectionClosed();
     });
-    // TODO bug here?
-    // a new connection will send initialData to existing connections
     return this.sse.init(req, res);
   }
 
   connectionClosed() {
-    // TODO for AccountService: stop/destroy when listeners = 0
     setTimeout(() => {
       const listeners = this.sse.listenerCount('data');
       this.logger.debug(`Connection closed. Open ${this.filter} connections: `, listeners);
@@ -98,14 +104,13 @@ export default class RouteService {
     delete existing[concatTypeFilter(this.type, this.filter)];
   }
 
-  static get(type, filter) {
+  static get(type: TransactionType, filter) {
     return existing[concatTypeFilter(type, filter)] ?? new RouteService({ type, filter })
   }
 
-  static route(type, filter) {
+  static route(type: TransactionType, filter) {
     return RouteService.get(type, filter).route;
   }
-
 }
 
 function parseParam(value, defaultValue = 0) {
