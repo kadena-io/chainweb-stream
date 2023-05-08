@@ -38,17 +38,21 @@ Note: It currently waits for a request before syncing events from cw-data.
 
 Three kinds of events are sent over the wire:
 
-### Initial load ("initial")
+### Configuration and initial data ("initial")
 
-Sent upon initialization _if_ there are cached results to send immediately, otherwise omitted.
+Upon connection initialization, chainweb-stream-server sends an `initial` event that includes system configuration values, request parameters and cached/initial data. If there is no cached data ready to send, that field is an empty array.
 
-Payload is an array of events/transfers. See Routes below for payload definitions.
+The `initial` event payload structure is defined in `src/types.ts` as `InitialEvent`
+
+Data payload is an array of events/transfers. See Routes below for payload definitions.
 
 ```
 id: 1
 event: initial
-data: [{payload}, {payload}]
+data: {"config":{"network":"mainnet01", ...},"data":[payload,payload,...]}
 ```
+
+The rationale for exposing and validating these configuration parameters is outlined in [Validating Server/Client configuration compatibility](Validating%20Server%2FClient%20configuration%20compatibility)
 
 ### Heartbeats ("ping")
 
@@ -112,7 +116,13 @@ Each streamed payload includes a `.meta` structure as follows:
 
 The `id` field is independent of block-specific values, so an event will have the same ID if it exists on two forks. You can use this to deduplicate, since events will be streamed multiple times if they are not confirmed yet.
 
+## Official Client
+
+You can use the official [chainweb-stream-client](https://github.com/kadena-community/kadena.js/tree/master/packages/libs/chainweb-stream-client) library to interact with chainweb-stream-client.
+
 ## Example Use
+
+You can experiment with the server APIs using curl:
 
 ```
 # curl -s  'http://localhost:4000/stream/event/coin?limit=2'
@@ -127,3 +137,38 @@ id: 2
 event: ping
 data: ""
 ```
+
+#### Validating Server/Client configuration compatibility
+
+Certain configuration incompatibilities between the server and a client can cause unexpected behaviors. These can include silent failures and infinite reconnection loops.
+
+The most important configuration values for the client to validate are `maxConf` and `heartbeat`.
+
+**Confirmation Depth**
+
+`maxConf` is the server-side configuration for `CONFIRMATION_DEPTH`. If the client is configured with a larger confirmation depth than the server, transactions will never be considered "finalized" on the client, as the server will consider that N confirmations are enough to consider a transaction finalized, whereas the client will wait for more than N for the same.
+
+Therefore the client must ensure that:
+
+`server.CONFIRMATION_DEPTH >= client.CONFIRMATION_DEPTH`
+
+**Heartbeat Interval**
+
+`heartbeat` is the server-side configuration for `HEARTBEAT_INTERVAL`. If the client is configured to process heartbeats (in order to detect stale connections) and its heartbeat interval configuration is smaller than the server's, then it will consider each connection stale before the server has sent the `ping` heartbeat event and the resulting behavior will be a reconnection loop initiated by the client.
+
+Therefore the client must ensure that:
+
+`server.HEARTBEAT_INTERVAL >= client.HEARTBEAT_INTERVAL`
+
+**Network**
+
+This enables clients to validate which network they are expecting to connect to, and throw an error if they are connected to the wrong one. This failure would otherwise be silent and potentially time consuming to debug.
+
+**Type & ID**
+
+This echoes the type (account/event/...) and ID (coin.TRANSFER/k:abcdef01234..) of the request parameter.
+
+**Version**
+
+A wire protocol version identifier to enable warnings when a client is not fully compatible with the server. 
+
