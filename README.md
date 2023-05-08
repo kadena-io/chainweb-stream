@@ -163,7 +163,7 @@ Therefore the client must ensure that:
 
 **Network**
 
-This enables clients to validate which network they are expecting to connect to, and throw an error if they are connected to the wrong one. This failure would otherwise be silent and potentially time consuming to debug.
+This enables clients to validate that they are connecting to the intended network, or otherwise throw an error.
 
 **Type & ID**
 
