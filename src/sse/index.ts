@@ -14,7 +14,7 @@ export const eventRoute = async (req, res) => {
   if (!filter) {
     return notFoundResponse(req, res);
   }
-  return RouteService.route('events', filter)(req, res);
+  return RouteService.route('event', filter)(req, res);
 }
 
 export const accountRoute = async (req, res) => {

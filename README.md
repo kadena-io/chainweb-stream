@@ -111,7 +111,7 @@ Data payload is an array of events/transfers. See Routes for payload definitions
 ```
 id: 1
 event: initial
-data: {"config":{"network":"mainnet01", ...},"data":[payload,payload,...]}
+data: {"config":{"network":"mainnet01","type":"event","id":"coin","maxConf":6,"heartbeat":25000,"v":"0.0.2"},"data":[]}
 ```
 
 The rationale for exposing and validating these configuration parameters is outlined in [Validating Server/Client configuration compatibility](#validating-serverclient-configuration-compatibility)
