@@ -114,7 +114,7 @@ event: initial
 data: {"config":{"network":"mainnet01", ...},"data":[payload,payload,...]}
 ```
 
-The rationale for exposing and validating these configuration parameters is outlined in [Validating Server/Client configuration compatibility](#Validating%20Server%2FClient%20configuration%20compatibility)
+The rationale for exposing and validating these configuration parameters is outlined in [Validating Server/Client configuration compatibility](#validating-serverclient-configuration-compatibility)
 
 ### Heartbeats ("ping")
 
