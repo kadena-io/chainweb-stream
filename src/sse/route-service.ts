@@ -4,6 +4,7 @@ import Logger from './logger.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { TransactionType, InitialEvent } from './types.js';
 import config from '../config/index.js';
+import { WIRE_PROTOCOL_VERSION } from '../config/constants.js';
 
 const { network, confirmationDepth, heartbeatInterval } = config;
 
@@ -76,7 +77,7 @@ export default class RouteService {
         id: this.filter,
         maxConf: confirmationDepth,
         heartbeat: heartbeatInterval,
-        v:  '0.0.2',
+        v:  WIRE_PROTOCOL_VERSION,
       },
       data: this.eventService.state.getAllEvents({ limit, minHeight }),
     };
