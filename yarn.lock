@@ -2166,9 +2166,9 @@ expect@^29.5.0:
     jest-message-util "^29.5.0"
     jest-util "^29.5.0"
 
-"express-sse@github:Takadenoshi/express-sse#0.0.2":
-  version "0.5.3"
-  resolved "git+ssh://git@github.com/Takadenoshi/express-sse.git#8efceb31782595dd7c85fa05bfe461e4ece82c3a"
+"express-sse@github:Takadenoshi/express-sse#0.0.4":
+  version "0.6.0"
+  resolved "git+ssh://git@github.com/Takadenoshi/express-sse.git#6898622af22eb6c40c554b4defbf75cc7c3e5a11"
 
 express@^4.17.3:
   version "4.18.2"

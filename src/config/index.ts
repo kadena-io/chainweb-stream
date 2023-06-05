@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+export * from './constants.js';
+
 type ConfigVars = 'network' | 'dataHost' | 'chainwebHost' |
   'port' | 'redisHost' | 'redisPassword' | 'confirmationDepth' |
   'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
@@ -110,7 +112,7 @@ const configSpec: ConfigSpecification[] = [
       'uvtUnp96w2KnxnneYa4kUN1kTvYSa8Ma33UDkQXV0NA',
       '78ngDzxXE8ZyHE-kFm2h7-6Xm8N8uwU_xd1fasO8gWU',
     ],
-  },
+  }
 ]
 
 interface Config {
