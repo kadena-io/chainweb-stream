@@ -2155,11 +2155,6 @@ expect@^27.5.1:
     jest-matcher-utils "^27.5.1"
     jest-message-util "^27.5.1"
 
-<<<<<<< HEAD
-"express-sse@github:Takadenoshi/express-sse#0.0.4":
-  version "0.6.0"
-  resolved "git+ssh://git@github.com/Takadenoshi/express-sse.git#6898622af22eb6c40c554b4defbf75cc7c3e5a11"
-=======
 expect@^29.5.0:
   version "29.5.0"
   resolved "https://registry.yarnpkg.com/expect/-/expect-29.5.0.tgz#68c0509156cb2a0adb8865d413b137eeaae682f7"
@@ -2171,10 +2166,9 @@ expect@^29.5.0:
     jest-message-util "^29.5.0"
     jest-util "^29.5.0"
 
-"express-sse@github:Takadenoshi/express-sse#0.0.2":
-  version "0.5.3"
-  resolved "git+ssh://git@github.com/Takadenoshi/express-sse.git#8efceb31782595dd7c85fa05bfe461e4ece82c3a"
->>>>>>> origin/main
+"express-sse@github:Takadenoshi/express-sse#0.0.4":
+  version "0.6.0"
+  resolved "git+ssh://git@github.com/Takadenoshi/express-sse.git#6898622af22eb6c40c554b4defbf75cc7c3e5a11"
 
 express@^4.17.3:
   version "4.18.2"
