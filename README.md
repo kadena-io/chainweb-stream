@@ -141,7 +141,7 @@ data: {payload}
 
 ## Validating Server/Client configuration compatibility
 
-Certain configuration incompatibilities between the server and a client can cause unexpected behaviors. These can include silent failures and infinite reconnection loops. `chainweb-stream-client` implements these validation checks.
+Certain configuration incompatibilities between the server and a client can cause unexpected behaviors. These can include silent failures and infinite reconnection loops. `chainweb-stream-client` implements certain validation checks.
 
 The most important configuration values for the client to validate are `maxConf` and `heartbeat`.
 
@@ -167,9 +167,8 @@ This enables clients to validate that they are connecting to the intended networ
 
 **Type & ID**
 
-This echoes the type (account/event/...) and ID (coin.TRANSFER/k:abcdef01234..) of the request parameter.
+This echoes the type (e.g. `account`/`event`) and ID (e.g. `coin.TRANSFER`/`k:abcdef01234...`) of the request parameter.
 
 **Version**
 
 A wire protocol version identifier to enable warnings when a client is not fully compatible with the server. 
-
