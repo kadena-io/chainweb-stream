@@ -3,7 +3,7 @@ import defaults from 'lodash/defaults.js'
 import { fetchWithRetry, getResponse } from './http.js';
 import config from '../config/index.js';
 import { filterBlackListItems } from './utils.js';
-import { isUndefined } from './types.js';
+import { isUndefined, TransactionType } from './types.js';
 import Logger from './logger.js';  
 
 const { dataHost } = config;
@@ -38,11 +38,11 @@ export async function getChainwebDataEvents(endpoint, name, minHeight, limit = 5
   return { response, next: nextNext };
 }
 
-function getEndpointParams(type, filter) {
+function getEndpointParams(type: TransactionType, filter) {
   if (type === "account") {
     return [`account/${filter}`, undefined];
-  } else if (type === "events") {
-    return [type, filter];
+  } else if (type === "event") {
+    return ["events", filter];
   } else {
     throw new Error("Unsupported endpoint: "+type);
   }

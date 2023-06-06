@@ -35,6 +35,20 @@ export type AccountData = ChainwebEventData & ChainwebSSEMetaData;
 
 export type GenericData = EventData | AccountData;
 
+export interface ChainwebStreamConfig {
+  network: string;
+  type: TransactionType;
+  id: string;
+  maxConf: number;
+  heartbeat: number;
+  v: string;
+}
+
+export interface InitialEvent {
+  config: ChainwebStreamConfig;
+  data: GenericData[];
+}
+
 export interface ChainwebCutData {
   hashes: {
     [chainId: number]: {
