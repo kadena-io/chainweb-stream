@@ -8,6 +8,7 @@ const CLASS_NAME = 'ChainwebCutService'
 export default class ChainwebCutService {
   logger = new Logger('CutService');
   lastCut: ChainwebCutData;
+  hasCut: Promise<boolean>;
   lastUpdateTime;
   running = false;
 
@@ -15,6 +16,7 @@ export default class ChainwebCutService {
   _updateInterval;
   _intervalId;
   _updateCallbacks = new Set<ChainwebCutCallback>();
+  _resolveFirstData: Function;
 
   constructor(config = defaultConfig) {
     this.logger = new Logger('CutService');
@@ -32,6 +34,7 @@ export default class ChainwebCutService {
     // (that was we would factor delays in getting upstream data into our update timings)
     // OTOH this should be quick usually
     this._intervalId = setInterval(() => this._step(), this._updateInterval);
+    this.hasCut = new Promise(resolve => this._resolveFirstData = resolve);
     await this._step();
     this.logger.verbose('Started');
   }
@@ -80,14 +83,18 @@ export default class ChainwebCutService {
     // Should we do this is there are no callbacks registered ? 
     // depends if this.lastCut is going to be used externally
     try {
-      this.lastCut = await this._getCut();
+      const newCut = await this._getCut();
+      if (!this.lastCut) {
+        this._resolveFirstData(true);
+      }
+      this.lastCut = newCut;
       this.lastUpdateTime = Date.now();
-      // should we register errorCallbacks in case getCut fails despite retries?
+      // TODO should we register errorCallbacks in case getCut fails despite retries?
+      this._executeCallbacks(newCut);
     } catch(e) {
       this.logger.warn(`Could not get cut: ${e.message}`);
       return;
     }
-    this._executeCallbacks(this.lastCut);
   }
 
   async _getCut(logger = this.logger) {

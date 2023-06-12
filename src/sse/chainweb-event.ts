@@ -94,6 +94,9 @@ export default class ChainwebEventService {
     if (!this._cut.running) {
       await this._cut.start();
     }
+    if (!this._cut.lastCut) {
+      await this._cut.hasCut;
+    }
     this.running = true;
     this.logger.verbose(`Started with minHeight=${this._minHeight}`);
     try {

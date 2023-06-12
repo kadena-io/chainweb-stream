@@ -1,6 +1,6 @@
 {
   "name": "chainweb-sse",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "src/server.js",
   "type": "module",
   "private": false,

@@ -26,6 +26,5 @@ async function notFoundResponse(req, res) {
   res.status(404).send({ error: `Route ${req.url} does not exist` });
 }
 
-
 // RouteService.get('coin')
 // RouteService.route('coin')
