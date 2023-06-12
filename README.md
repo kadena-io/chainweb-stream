@@ -128,6 +128,18 @@ event: ping
 data: ""
 ```
 
+### Heights
+
+Sent whenever a new cut is fetched from chainweb-node. Client will use this to resume gracefully based on a formula like `$prev_max_height - $confirmation_depth - $max_chain_span`.
+
+Payload is an array of the height of each chain, with implicit indexes (i.e. chain 0 = index 0, etc)
+
+```
+id: 2
+event: heights
+data: [3805145,3805145,3805144,3805145,3805146,3805144,3805146,3805145,3805145,3805146,3805145,3805144,3805145,3805145,3805145,3805145,3805146,3805145,3805146,3805145]
+```
+
 ### Data 
 
 For new or updated data. No event name (default message callback if you are consuming through EventSource).
