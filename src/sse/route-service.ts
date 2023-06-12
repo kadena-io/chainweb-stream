@@ -2,7 +2,7 @@ import SSE from 'express-sse';
 import ChainwebEventService from './chainweb-event.js';
 import Logger from './logger.js';
 import ChainwebCutService from './chainweb-cut.js';
-import { TransactionType, InitialEvent } from './types.js';
+import { TransactionType, InitialEvent, ChainwebCutData } from './types.js';
 import config from '../config/index.js';
 import { WIRE_PROTOCOL_VERSION } from '../config/constants.js';
 
@@ -45,9 +45,10 @@ export default class RouteService {
       cut = new ChainwebCutService();
     }
     this.eventService = new ChainwebEventService({ type, filter, cut, limit: defaultLimit });
-    this.eventService.on('confirmed', event => this.sse.send(event), 'update');
-    this.eventService.on('unconfirmed', event => this.sse.send(event), 'update');
-    this.eventService.on('updateConfirmations', event => this.sse.send(event), 'update');
+    this.eventService.on('confirmed', event => this.sse.send(event));
+    this.eventService.on('unconfirmed', event => this.sse.send(event));
+    this.eventService.on('updateConfirmations', event => this.sse.send(event));
+    cut.registerUpdateCallback(this.broadcastCut);
     this.logger = new Logger('EventRoute', type, filter);
     existing[concatTypeFilter(type, filter)] = this;
   }
@@ -89,6 +90,17 @@ export default class RouteService {
     return this.sse.init(req, res);
   }
 
+  broadcastCut = (cut: ChainwebCutData) => {
+    // extract height from cut.hashes ensuring sort by chainId
+    // hashes structure: { "1": { "height": 123456 } }
+    const flatCut =
+      Object.entries(cut.hashes)
+        .map(([c, { height }]) => ([Number(c), height]))
+        .sort(([a], [b]) => a < b ? -1 : 1)
+        .map(([_, height]) => height)
+    this.sse.send(flatCut, 'heights');
+  }
+
   connectionClosed() {
     setTimeout(() => {
       const listeners = this.sse.listenerCount('data');
@@ -102,6 +114,7 @@ export default class RouteService {
 
   destroy() {
     this.eventService.stop()
+    cut.unregisterUpdateCallback(this.broadcastCut);
     delete existing[concatTypeFilter(this.type, this.filter)];
   }
 
