@@ -128,7 +128,7 @@ export default class RouteService {
 }
 
 function parseParam(value, defaultValue = 0) {
-  if (!value) {
+  if (value === undefined) {
     return defaultValue;
   }
   value = Number(value);
