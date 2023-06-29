@@ -130,14 +130,16 @@ data: ""
 
 ### Heights
 
-Sent whenever a new cut is fetched from chainweb-node. Client will use this to resume gracefully based on a formula like `$prev_max_height - $confirmation_depth - $max_chain_span`.
+Sent whenever a new max height is fetched from chainweb-data. This check against chainweb-data happens every 30 seconds by default, which is configurable with the CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL env var.
 
-Payload is an array of the height of each chain, with implicit indexes (i.e. chain 0 = index 0, etc)
+The client currently uses this value to reconnect gracefully based on a formula like `$prev_max_height - $confirmation_depth - $max_chain_span`. 
+
+Payload is an object with `data` as the key and a numeric height as value:
 
 ```
 id: 2
 event: heights
-data: [3805145,3805145,3805144,3805145,3805146,3805144,3805146,3805145,3805145,3805146,3805145,3805144,3805145,3805145,3805145,3805145,3805146,3805145,3805146,3805145]
+data: {"data":3380002}
 ```
 
 ### Data 
