@@ -5,10 +5,13 @@ import ChainwebCutService from './chainweb-cut.js';
 import { TransactionType, InitialEvent, ChainwebCutData } from './types.js';
 import config from '../config/index.js';
 import { WIRE_PROTOCOL_VERSION } from '../config/constants.js';
-
-const { network, confirmationDepth, heartbeatInterval } = config;
+import ChainwebDataHeightTracker from './chainweb-data-height-tracker.js';
 
 let cut;
+const heightTracker = new ChainwebDataHeightTracker();
+heightTracker.start();
+
+const { network, confirmationDepth, heartbeatInterval } = config;
 
 const defaultLimit = 25;
 const maxLimit = 10000;
@@ -48,7 +51,8 @@ export default class RouteService {
     this.eventService.on('confirmed', event => this.sse.send(event));
     this.eventService.on('unconfirmed', event => this.sse.send(event));
     this.eventService.on('updateConfirmations', event => this.sse.send(event));
-    cut.registerUpdateCallback(this.broadcastCut);
+    heightTracker.registerUpdateCallback(this.broadcastHeight);
+    
     this.logger = new Logger('EventRoute', type, filter);
     existing[concatTypeFilter(type, filter)] = this;
   }
@@ -90,15 +94,8 @@ export default class RouteService {
     return this.sse.init(req, res);
   }
 
-  broadcastCut = (cut: ChainwebCutData) => {
-    // extract height from cut.hashes ensuring sort by chainId
-    // hashes structure: { "1": { "height": 123456 } }
-    const flatCut =
-      Object.entries(cut.hashes)
-        .map(([c, { height }]) => ([Number(c), height]))
-        .sort(([a], [b]) => a < b ? -1 : 1)
-        .map(([_, height]) => height)
-    this.sse.send(flatCut, 'heights');
+  broadcastHeight = (maxHeight: number) => {
+    this.sse.send({ data: maxHeight }, 'heights');
   }
 
   connectionClosed() {
@@ -114,7 +111,7 @@ export default class RouteService {
 
   destroy() {
     this.eventService.stop()
-    cut.unregisterUpdateCallback(this.broadcastCut);
+    heightTracker.unregisterUpdateCallback(this.broadcastHeight);
     delete existing[concatTypeFilter(this.type, this.filter)];
   }
 

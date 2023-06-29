@@ -4,7 +4,7 @@ export * from './constants.js';
 
 type ConfigVars = 'network' | 'dataHost' | 'chainwebHost' |
   'port' | 'redisHost' | 'redisPassword' | 'confirmationDepth' |
-  'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
+  'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'chainwebDataHeightUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
   'log' | 'production' | 'moduleHashBlacklist';
 
 interface ConfigSpecification {
@@ -86,6 +86,12 @@ const configSpec: ConfigSpecification[] = [
     defaultValue: 15_000,
   },
   {
+    varName: 'chainwebDataHeightUpdateInterval',
+    envName: 'CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL',
+    numeric: true,
+    defaultValue: 30_000,
+  },
+  {
     varName: 'log',
     envName: 'LOG',
     defaultValue: 'log',
@@ -126,6 +132,7 @@ interface Config {
   eventsStepInterval: number;
   heartbeatInterval: number;
   chainwebCutUpdateInterval: number;
+  chainwebDataHeightUpdateInterval: number;
   httpMaxRetries: number;
   httpRetryBackoffStep: number;
   // with default values, string
