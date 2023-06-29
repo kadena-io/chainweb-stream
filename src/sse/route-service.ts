@@ -7,14 +7,14 @@ import config from '../config/index.js';
 import { WIRE_PROTOCOL_VERSION } from '../config/constants.js';
 import ChainwebDataHeightTracker from './chainweb-data-height-tracker.js';
 
-let cut;
-const heightTracker = new ChainwebDataHeightTracker();
-heightTracker.start();
-
 const { network, confirmationDepth, heartbeatInterval } = config;
 
 const defaultLimit = 25;
 const maxLimit = 10000;
+
+let cut;
+const heightTracker = new ChainwebDataHeightTracker();
+heightTracker.start();
 
 /*
  * Singleton service for SSE routing event filter requests
