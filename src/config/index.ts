@@ -5,7 +5,7 @@ export * from './constants.js';
 type ConfigVars = 'network' | 'dataHost' | 'chainwebHost' |
   'port' | 'redisHost' | 'redisPassword' | 'confirmationDepth' |
   'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
-  'log' | 'production' | 'moduleHashBlacklist';
+  'log' | 'production' | 'moduleHashBlacklist' | 'eventsWhitelist';
 
 interface ConfigSpecification {
   varName: ConfigVars;
@@ -112,7 +112,13 @@ const configSpec: ConfigSpecification[] = [
       'uvtUnp96w2KnxnneYa4kUN1kTvYSa8Ma33UDkQXV0NA',
       '78ngDzxXE8ZyHE-kFm2h7-6Xm8N8uwU_xd1fasO8gWU',
     ],
-  }
+  },
+  {
+    varName: 'eventsWhitelist',
+    envName: 'EVENTS_WHITELIST',
+    isArray: true,
+    defaultValue: ['*'],
+  },
 ]
 
 interface Config {
@@ -136,6 +142,7 @@ interface Config {
   production: boolean;
   // with default values, string array
   moduleHashBlacklist: string[];
+  eventsWhitelist: string[];
 }
 
 const config: Config = generateConfig(process.env, configSpec);
