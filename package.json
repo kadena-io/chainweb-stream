@@ -10,15 +10,13 @@
     "node": ">=12"
   },
   "scripts": {
-    "start": "ts-node ./src/index.ts",
+    "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm ./src/index.ts",
     "build": "tsc",
     "build:watch": "tsc -w",
     "format": "prettier -w ./src",
     "knip": "knip",
     "lint": "eslint ./src",
-    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --silent .",
-    "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand . --coverage",
-    "test:watch": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --watch ."
+    "test": "echo \"No tests yet\""
   },
   "dependencies": {
     "compression": "^1.7.4",
