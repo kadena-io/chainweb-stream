@@ -5,14 +5,15 @@ export * from './constants.js';
 type ConfigVars = 'network' | 'dataHost' | 'chainwebHost' |
   'port' | 'redisHost' | 'redisPassword' | 'confirmationDepth' |
   'heartbeatInterval' | 'eventsStepInterval' | 'chainwebCutUpdateInterval' | 'httpMaxRetries' | 'httpRetryBackoffStep' |
-  'log' | 'production' | 'moduleHashBlacklist';
+  'log' | 'logTimestamps' | 'logColors' | 'production' | 'moduleHashBlacklist';
 
 interface ConfigSpecification {
   varName: ConfigVars;
   envName: string;
-  numeric?: boolean;
-  isArray?: boolean;
-  required?: boolean;
+  numeric?: true;
+  boolean?: true;
+  isArray?: true;
+  required?: true;
   defaultValue?: any;
   callback?: (...props: any[]) => any;
 }
@@ -91,6 +92,18 @@ const configSpec: ConfigSpecification[] = [
     defaultValue: 'log',
   },
   {
+    varName: 'logTimestamps',
+    envName: 'LOG_TIMESTAMPS',
+    boolean: true,
+    defaultValue: true,
+  },
+  {
+    varName: 'logColors',
+    envName: 'LOG_COLORS',
+    boolean: true,
+    defaultValue: true,
+  },
+  {
     varName: 'production',
     envName: 'NODE_ENV',
     callback: (nodeEnv) => isProduction(nodeEnv),
@@ -132,7 +145,9 @@ interface Config {
   log: string;
   redisHost: string;
   redisPassword: string;
-  // bool, dev or prod
+  // bools
+  logTimestamps: boolean;
+  logColors: boolean;
   production: boolean;
   // with default values, string array
   moduleHashBlacklist: string[];
@@ -144,7 +159,7 @@ export default config;
 
 export function generateConfig(env: NodeJS.ProcessEnv, configSpec: ConfigSpecification[]): Config {
   return Object.fromEntries(
-    configSpec.map(({ varName, envName, numeric, isArray, defaultValue, required, callback }) => {
+    configSpec.map(({ varName, envName, numeric, boolean, isArray, defaultValue, required, callback }) => {
       // enforce default & required must be mutually exclusive
       if (required && defaultValue !== undefined) {
         die(`Config ${envName} cannot be required and have a defaultValue at the same time`);
@@ -162,6 +177,12 @@ export function generateConfig(env: NodeJS.ProcessEnv, configSpec: ConfigSpecifi
           die(`Config ${envName} must be numeric but got a non-numeric value: ${value}`);
         }
         value = numericValue;
+      }
+      // cast to boolean if needed
+      if (boolean) {
+        console.log(varName, value);
+        value = parseBoolean(value);
+        console.log(varName, value);
       }
       if (isArray && !Array.isArray(value)) {
         value = value.split(/, ?/g);
@@ -184,4 +205,9 @@ function die(message) {
 
 function isProduction(NODE_ENV: string) {
   return NODE_ENV === 'production';
+}
+
+function parseBoolean(value: string | number | boolean): boolean {
+  const strValue = String(value);
+  return strValue !== "0" && strValue !== "false"
 }

@@ -4,7 +4,7 @@ import { fetchWithRetry, getResponse } from './http.js';
 import config from '../config/index.js';
 import { filterBlackListItems } from './utils.js';
 import { isUndefined, TransactionType } from './types.js';
-import Logger from './logger.js';  
+import Logger from '../logger.js';
 
 const { dataHost } = config;
 

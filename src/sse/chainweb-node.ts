@@ -1,7 +1,7 @@
 import { getResponse, fetchWithRetry, postData } from './http.js';
 import { summarizeChainwebCut } from './utils.js';
 import config from '../config/index.js';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 
 const { chainwebHost, network } = config;
 

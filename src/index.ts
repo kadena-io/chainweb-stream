@@ -20,5 +20,5 @@ app.use(router);
 const server = createServer(app);
 
 server.listen(port, () => {
-  console.log(`KDA Events service (${config.network}) listening at http://localhost:${port}`);
+  console.log(`Chainweb-stream (${config.network}) listening on port ${port}`);
 });
