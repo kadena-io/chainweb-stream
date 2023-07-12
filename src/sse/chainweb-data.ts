@@ -95,7 +95,6 @@ export async function syncEventsFromChainwebData(opts, logger = new Logger(syncE
     if (completedResults.length > totalLimit || !next)
       break;
     _next = next;
-    console.log('next', next);
   }
 
   try {

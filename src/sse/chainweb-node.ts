@@ -9,7 +9,6 @@ export async function getChainwebCut() {
   const rawRes = await fetchWithRetry(`${chainwebHost}/chainweb/0.0/${network}/cut`);
   const response = await getResponse(rawRes);
   const summary = summarizeChainwebCut(response);
-  console.error('Got CW cut', JSON.stringify(summary));
   return response;
 }
 

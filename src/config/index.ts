@@ -180,9 +180,7 @@ export function generateConfig(env: NodeJS.ProcessEnv, configSpec: ConfigSpecifi
       }
       // cast to boolean if needed
       if (boolean) {
-        console.log(varName, value);
         value = parseBoolean(value);
-        console.log(varName, value);
       }
       if (isArray && !Array.isArray(value)) {
         value = value.split(/, ?/g);
