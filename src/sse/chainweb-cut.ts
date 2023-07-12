@@ -16,7 +16,7 @@ export default class ChainwebCutService {
   _updateInterval;
   _intervalId;
   _updateCallbacks = new Set<ChainwebCutCallback>();
-  _resolveFirstData: Function;
+  _resolveFirstData: (gotData: boolean) => void;
 
   constructor(config = defaultConfig) {
     this.logger = new Logger('CutService');

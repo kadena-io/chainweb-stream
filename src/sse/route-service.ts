@@ -10,7 +10,7 @@ import ChainwebDataHeightTracker from './chainweb-data-height-tracker.js';
 const { network, confirmationDepth, heartbeatInterval } = config;
 
 const defaultLimit = 25;
-const maxLimit = 10000;
+const maxLimit = 1000;
 
 let cut;
 const heightTracker = new ChainwebDataHeightTracker();
@@ -124,16 +124,17 @@ export default class RouteService {
   }
 }
 
-function parseParam(value, defaultValue = 0) {
+function parseParam(value: string | undefined, defaultValue: number = 0): number {
   if (value === undefined) {
     return defaultValue;
   }
-  value = Number(value);
-  if (!Number.isFinite(value)) {
+  const numValue = Number(value);
+  if (!Number.isFinite(numValue)) {
     return defaultValue;
   }
-  if (typeof defaultValue !== "undefined" && value > maxLimit) {
+  if (defaultValue !== undefined && numValue > maxLimit) {
     return maxLimit;
   }
-  return value;
+  // value is unparsable and we do not have a default
+  return 0;
 }
