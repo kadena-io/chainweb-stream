@@ -1,6 +1,6 @@
 import SSE from 'express-sse';
 import ChainwebEventService from './chainweb-event.js';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 import ChainwebCutService from './chainweb-cut.js';
 import { TransactionType, InitialEvent, ChainwebCutData } from './types.js';
 import config from '../config/index.js';

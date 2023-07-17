@@ -2,7 +2,7 @@ import filter from 'lodash/filter.js';
 import flatten from 'lodash/flatten.js';
 import defaults from 'lodash/defaults.js';
 import { ChainwebCutData, ChainwebBaseData, isPositiveNumber, isNonNegativeNumber } from './types.js';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 
 export function sortEvents(completedResults: ChainwebBaseData[], newestToOldest = false) {
   completedResults.sort((event1, event2) =>

@@ -1,7 +1,7 @@
 import { getResponse, fetchWithRetry, postData } from './http.js';
 import { summarizeChainwebCut } from './utils.js';
 import config from '../config/index.js';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 
 const { chainwebHost, network } = config;
 
@@ -9,7 +9,6 @@ export async function getChainwebCut() {
   const rawRes = await fetchWithRetry(`${chainwebHost}/chainweb/0.0/${network}/cut`);
   const response = await getResponse(rawRes);
   const summary = summarizeChainwebCut(response);
-  console.error('Got CW cut', JSON.stringify(summary));
   return response;
 }
 

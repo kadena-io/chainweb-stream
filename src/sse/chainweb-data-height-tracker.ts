@@ -1,6 +1,6 @@
 import { getChainwebDataEvents } from './chainweb-data.js';
 import { validateType } from './types.js';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 import config from '../config/index.js';
 
 const {
