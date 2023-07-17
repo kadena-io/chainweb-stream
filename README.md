@@ -20,6 +20,8 @@ Configuration via environment variables or dotenv file is required. Copy the `.d
 
 `DATA_HOST` should point to a chainweb-data host.
 
+`EVENTS_WHITELIST` defaults to `*` (allow all). You can use this configuration value to limit which modules/events your server should support. Modules or events are expected verbatim, so `coin` will not also support `coin.TRANSFER`, both need to be explicitly provided if you want to query by both.
+
 ```
 npm i # or yarn
 cp .default.env .env
