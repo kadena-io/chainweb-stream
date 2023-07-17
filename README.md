@@ -12,6 +12,8 @@ Alpha version / unstable.
 
 ## Setup
 
+**Recommended node version: v18 (LTS)**. v20 should also work but is not tested extensively.
+
 Chainweb-stream-server currently requires a local redis client to cache results.
 
 Configuration via environment variables or dotenv file is required. Copy the `.default.env` file into `.env` and set at least the `NETWORK`, `DATA_HOST` and `CHAINWEB_HOST` values.
