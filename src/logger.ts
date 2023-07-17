@@ -1,14 +1,24 @@
-import config from '../config/index.js';
 import npmlog from 'npmlog';
+import config from './config/index.js';
+
+const { log: logLevel, logTimestamps, logColors } = config;
 
 const loggerPrefix = '[Logger]';
 
 // default log level: verbose
 npmlog.level = 'verbose';
 
-// Prefix timestamp in ISO format
-Object.defineProperty(npmlog, 'heading', { get: () => { return new Date().toISOString() } })
-npmlog.headingStyle = { bg: '', fg: 'white' }
+// Prefix timestamp in ISO format by default.
+// Turn off with LOG_TIMESTAMPS=0 if your logs are timestamped externally
+if (logTimestamps) {
+  Object.defineProperty(npmlog, 'heading', { get: () => { return new Date().toISOString() } })
+}
+
+if (!logColors) {
+  npmlog.disableColor()
+} else {
+  npmlog.headingStyle = { bg: '', fg: 'white' }
+}
 
 const logLevelMappings = {
   "silly": "silly",
@@ -21,11 +31,11 @@ const logLevelMappings = {
 };
 
 // log level from config
-if (config.log) {
-  if (logLevelMappings[config.log]) {
-    npmlog.level = config.log;
+if (logLevel) {
+  if (logLevelMappings[logLevel]) {
+    npmlog.level = logLevel;
   } else {
-    npmlog.warn(loggerPrefix, `Unknown log level: ${config.log}`);
+    npmlog.warn(loggerPrefix, `Unknown log level: ${logLevel}`);
   }
 }
 

@@ -1,4 +1,4 @@
-import Logger from './logger.js';
+import Logger from '../logger.js';
 import defaultConfig from '../config/index.js';
 import { ChainwebCutData, ChainwebCutCallback, validateDefined, validateType } from './types.js';
 import { getResponse, fetchWithRetry, postData } from './http.js';

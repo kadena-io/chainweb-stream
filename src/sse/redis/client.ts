@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
 import defaults from 'lodash/defaults.js';
-import Logger from '../logger.js';
+import Logger from '../../logger.js';
 import defaultConfig from '../../config/index.js';
 import { withRetries } from '../utils.js';
 

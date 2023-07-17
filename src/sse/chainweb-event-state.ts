@@ -7,7 +7,7 @@ import {
   setRedisOrphanedEvents,
 } from './redis/index.js';
 import { TransactionType, GenericData } from './types.js';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 
 interface GetEventOptions {
   minHeight?: number;

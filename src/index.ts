@@ -5,6 +5,9 @@ import helmet from 'helmet';
 import compression from 'compression';
 import config from './config/index.js';
 import { router } from './routes/sse.routes.js';
+import Logger from './logger.js';
+
+const logger = new Logger('Server');
 
 const { port } = config;
 const app = express();
@@ -20,5 +23,5 @@ app.use(router);
 const server = createServer(app);
 
 server.listen(port, () => {
-  console.log(`KDA Events service (${config.network}) listening at http://localhost:${port}`);
+  logger.log(`Chainweb-stream (${config.network}) listening on port ${port}`);
 });

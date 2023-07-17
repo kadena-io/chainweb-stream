@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import Logger from './logger.js';
+import Logger from '../logger.js';
 import {
   validateDefined,
   validateType,
