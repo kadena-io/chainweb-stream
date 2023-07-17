@@ -3,18 +3,15 @@ import { isOrphan } from './orphans.js';
 import { getChainwebCut } from './chainweb-node.js';
 import RouteService from './route-service.js';
 
-const availableModules = {
-  'coin': 'coin',
-  'marmalade': 'marmalade.ledger',
-};
+const { eventsWhitelist } = config;
 
 export const eventRoute = async (req, res) => {
   const { eventType } = req.params;
-  const filter = availableModules[eventType];
-  if (!filter) {
+  const isModuleAllowed = eventsWhitelist.includes('*') || eventsWhitelist.includes(eventType);
+  if (!isModuleAllowed) {
     return notFoundResponse(req, res);
   }
-  return RouteService.route('event', filter)(req, res);
+  return RouteService.route('event', eventType)(req, res);
 }
 
 export const accountRoute = async (req, res) => {
@@ -23,7 +20,7 @@ export const accountRoute = async (req, res) => {
 }
 
 async function notFoundResponse(req, res) {
-  res.status(404).send({ error: `Route ${req.url} does not exist` });
+  res.status(404).send({ error: `Route ${req.url} does not exist. You may need to add this module or event to the events whitelist configuration value.` });
 }
 
 // RouteService.get('coin')

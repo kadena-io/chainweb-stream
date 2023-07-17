@@ -12,6 +12,8 @@ Alpha version / unstable.
 
 ## Setup
 
+**Recommended node version: v18 (LTS)**. v20 should also work but is not tested extensively.
+
 Chainweb-stream-server currently requires a local redis client to cache results.
 
 Configuration via environment variables or dotenv file is required. Copy the `.default.env` file into `.env` and set at least the `NETWORK`, `DATA_HOST` and `CHAINWEB_HOST` values.
@@ -19,6 +21,8 @@ Configuration via environment variables or dotenv file is required. Copy the `.d
 `CHAINWEB_HOST` should point to a chainweb-node *service* host.
 
 `DATA_HOST` should point to a chainweb-data host.
+
+`EVENTS_WHITELIST` defaults to `*` (allow all). You can use this configuration value to limit which modules/events your server should support. Modules or events are expected verbatim, so `coin` will not also support `coin.TRANSFER`, both need to be explicitly provided if you want to query by both.
 
 ```
 npm i # or yarn
