@@ -23,6 +23,5 @@ async function notFoundResponse(req, res) {
   res.status(404).send({ error: `Route ${req.url} does not exist. You may need to add this module or event to the events whitelist configuration value.` });
 }
 
-
 // RouteService.get('coin')
 // RouteService.route('coin')

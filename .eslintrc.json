@@ -5,8 +5,7 @@
         "es2021": true
     },
     "extends": [
-        "eslint:recommended",
-        "plugin:prettier/recommended"
+        "@kadena-dev/eslint-config/profile/lib"
     ],
     "parserOptions": {
         "ecmaVersion": "latest",

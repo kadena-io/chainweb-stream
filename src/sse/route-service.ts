@@ -2,16 +2,19 @@ import SSE from 'express-sse';
 import ChainwebEventService from './chainweb-event.js';
 import Logger from '../logger.js';
 import ChainwebCutService from './chainweb-cut.js';
-import { TransactionType, InitialEvent } from './types.js';
+import { TransactionType, InitialEvent, ChainwebCutData } from './types.js';
 import config from '../config/index.js';
 import { WIRE_PROTOCOL_VERSION } from '../config/constants.js';
+import ChainwebDataHeightTracker from './chainweb-data-height-tracker.js';
 
 const { network, confirmationDepth, heartbeatInterval } = config;
 
-let cut;
-
 const defaultLimit = 25;
-const maxLimit = 10000;
+const maxLimit = 1000;
+
+let cut;
+const heightTracker = new ChainwebDataHeightTracker();
+heightTracker.start();
 
 /*
  * Singleton service for SSE routing event filter requests
@@ -45,9 +48,11 @@ export default class RouteService {
       cut = new ChainwebCutService();
     }
     this.eventService = new ChainwebEventService({ type, filter, cut, limit: defaultLimit });
-    this.eventService.on('confirmed', event => this.sse.send(event), 'update');
-    this.eventService.on('unconfirmed', event => this.sse.send(event), 'update');
-    this.eventService.on('updateConfirmations', event => this.sse.send(event), 'update');
+    this.eventService.on('confirmed', event => this.sse.send(event));
+    this.eventService.on('unconfirmed', event => this.sse.send(event));
+    this.eventService.on('updateConfirmations', event => this.sse.send(event));
+    heightTracker.registerUpdateCallback(this.broadcastHeight);
+    
     this.logger = new Logger('EventRoute', type, filter);
     existing[concatTypeFilter(type, filter)] = this;
   }
@@ -89,6 +94,10 @@ export default class RouteService {
     return this.sse.init(req, res);
   }
 
+  broadcastHeight = (maxHeight: number) => {
+    this.sse.send({ data: maxHeight }, 'heights');
+  }
+
   connectionClosed() {
     setTimeout(() => {
       const listeners = this.sse.listenerCount('data');
@@ -102,6 +111,7 @@ export default class RouteService {
 
   destroy() {
     this.eventService.stop()
+    heightTracker.unregisterUpdateCallback(this.broadcastHeight);
     delete existing[concatTypeFilter(this.type, this.filter)];
   }
 
@@ -114,16 +124,17 @@ export default class RouteService {
   }
 }
 
-function parseParam(value, defaultValue = 0) {
-  if (!value) {
+function parseParam(value: string | undefined, defaultValue: number = 0): number {
+  if (value === undefined) {
     return defaultValue;
   }
-  value = Number(value);
-  if (!Number.isFinite(value)) {
+  const numValue = Number(value);
+  if (!Number.isFinite(numValue)) {
     return defaultValue;
   }
-  if (typeof defaultValue !== "undefined" && value > maxLimit) {
+  if (defaultValue !== undefined && numValue > maxLimit) {
     return maxLimit;
   }
-  return value;
+  // value is unparsable and we do not have a default
+  return 0;
 }

@@ -51,7 +51,7 @@ export interface InitialEvent {
 
 export interface ChainwebCutData {
   hashes: {
-    [chainId: number]: {
+    [chainId: string]: {
       height: number;
       hash: string;
     }

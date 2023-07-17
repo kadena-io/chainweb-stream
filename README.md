@@ -132,6 +132,20 @@ event: ping
 data: ""
 ```
 
+### Heights
+
+Sent whenever a new max height is fetched from chainweb-data. This check against chainweb-data happens every 30 seconds by default, which is configurable with the CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL env var.
+
+The client currently uses this value to reconnect gracefully based on a formula like `$prev_max_height - $confirmation_depth - $max_chain_span`. 
+
+Payload is an object with `data` as the key and a numeric height as value:
+
+```
+id: 2
+event: heights
+data: {"data":3380002}
+```
+
 ### Data 
 
 For new or updated data. No event name (default message callback if you are consuming through EventSource).

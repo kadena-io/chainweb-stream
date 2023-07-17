@@ -1,6 +1,6 @@
 {
   "name": "@kadena/chainweb-stream",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "src/server.js",
   "type": "module",
   "private": false,
@@ -19,6 +19,8 @@
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
+    "@kadena-dev/eslint-config": "^0.0.8",
+    "@rushstack/eslint-config": "^3.3.2",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
