@@ -1,5 +1,5 @@
 {
-  "name": "chainweb-sse",
+  "name": "@kadena/chainweb-stream",
   "version": "0.0.2",
   "main": "src/server.js",
   "type": "module",
