@@ -22,7 +22,6 @@ function heightSorter(a, b) {
 
 function presentEvents(sources, options) {
   const { minHeight, maxHeight, limit } = options;
-
   const filterPredicates = [];
   if (minHeight) {
     filterPredicates.push(event => event.height >= minHeight);
@@ -120,7 +119,7 @@ export default class ChainwebEventServiceState {
       if (existing.height <= height) {
         // we can insert if we need to
         if (this._eventExists(event, this[permanence], idx)) {
-          this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${permanence}, not notifying`);
+          // this.logger.warn(`Event ${event.requestKey} ${event.name} already in ${permanence}, not notifying`);
           return false;
         }
         this[permanence].splice(idx, 0, event);
