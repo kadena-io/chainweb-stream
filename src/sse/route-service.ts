@@ -9,8 +9,8 @@ import ChainwebDataHeightTracker from './chainweb-data-height-tracker.js';
 
 const { network, confirmationDepth, heartbeatInterval } = config;
 
-const defaultLimit = 25;
-const maxLimit = 1000;
+const DEFAULT_LIMIT = 25;
+const MAX_LIMIT = 1000;
 
 let cut;
 const heightTracker = new ChainwebDataHeightTracker();
@@ -47,7 +47,7 @@ export default class RouteService {
     if (!cut) {
       cut = new ChainwebCutService();
     }
-    this.eventService = new ChainwebEventService({ type, filter, cut, limit: defaultLimit });
+    this.eventService = new ChainwebEventService({ type, filter, cut });
     this.eventService.on('confirmed', event => this.sse.send(event));
     this.eventService.on('unconfirmed', event => this.sse.send(event));
     this.eventService.on('updateConfirmations', event => this.sse.send(event));
@@ -69,7 +69,7 @@ export default class RouteService {
     if (!this.inited) {
       await this.init();
     }
-    const limit = parseParam(req.query.limit, defaultLimit);
+    const limit = parseParam(req.query.limit, DEFAULT_LIMIT, MAX_LIMIT);
     const minHeight = parseParam(req.query.minHeight);
     // (ab)use init event / updateInit to handle different initial query params
     // TODO handle limit intelligently - wait if we haven't reached that yet, etc
@@ -124,7 +124,7 @@ export default class RouteService {
   }
 }
 
-function parseParam(value: string | undefined, defaultValue: number = 0): number {
+function parseParam(value: string | undefined, defaultValue: number = 0, maxLimit: number = undefined): number {
   if (value === undefined) {
     return defaultValue;
   }
@@ -132,8 +132,11 @@ function parseParam(value: string | undefined, defaultValue: number = 0): number
   if (!Number.isFinite(numValue)) {
     return defaultValue;
   }
-  if (defaultValue !== undefined && numValue > maxLimit) {
+  if (maxLimit !== undefined && numValue > maxLimit) {
     return maxLimit;
+  }
+  if (Number.isFinite(numValue)) {
+    return numValue;
   }
   // value is unparsable and we do not have a default
   return 0;

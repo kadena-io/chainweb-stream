@@ -32,7 +32,6 @@ interface ChainwebEventServiceConstructor {
   filter: string;
   cut: ChainwebCutService;
   minHeight?: number;
-  limit?: number;
 }
 
 export default class ChainwebEventService {
@@ -45,7 +44,6 @@ export default class ChainwebEventService {
 
   _filter = null      // chainweb-data filter for this service, e.g "marmalade." or "coin."
   _minHeight = null  // last seen height
-  _limit = 100;
   
   _cut: ChainwebCutService  // ChainwebCut service
 
@@ -55,7 +53,7 @@ export default class ChainwebEventService {
   _updateConfirmationsCallbacks = new Set()
   _orphanedCallbacks = new Set()
 
-  constructor({ type, filter, minHeight, cut, limit }: ChainwebEventServiceConstructor) {
+  constructor({ type, filter, minHeight, cut }: ChainwebEventServiceConstructor) {
     const logPrefix = filter.endsWith('.') ? filter.slice(0, filter.length - 1) : filter;
     this.logger = new Logger('EventService', logPrefix);
 
@@ -63,9 +61,6 @@ export default class ChainwebEventService {
     this._type = type;
     // TODO validate event type IF we keep this for multiple types, e.g. account & module
     this._filter = filter;
-    if (limit) {
-      this._limit = limit;
-    }
     this.state = new State({ type, filter, logger: this.logger, });
 
     if (minHeight) {
