@@ -46,23 +46,23 @@ The following configuration flags can be passed in as environment variables or p
 
 | Variable Name                        | Type                       | Required | Default Value  | Description                                                                                                 |
 | ------------------------------------ | -------------------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
-| NETWORK                              | string                     | yes      |                | Chainweb network to use. E.g. testnet04/mainnet01                                                           |
-| DATA_HOST                            | string                     | yes      |                | URL of chainweb-data host to connect to. E.g. http://localhost:7890                                         |
-| CHAINWEB_HOST                        | string                     | yes      |                | URL of chainweb-node **service** host to connect to. E.g. http://localhost:6600                             |
-| PORT                                 | number                     |          | 4000           | Port to listen on                                                                                           |
-| REDIS_HOST                           | string                     |          | localhost:6379 | Redis server to use. host:port                                                                              |
-| REDIS_PASSWORD                       | string                     |          |                | Redis password                                                                                              |
-| CONFIRMATION_DEPTH                   | number                     |          | 6              | Depth at which to consider transactions finalized                                                           |
-| HEARTBEAT_INTERVAL                   | number                     |          | 25000          | Interval between heartbeat (ping) events                                                                    |
-| EVENTS_STEP_INTERVAL                 | number                     |          | 10000          | Interval between new data checks against chainweb-data                                                      |
-| CHAINWEB_CUT_UPDATE_INTERVAL         | number                     |          | 15000          | Interval between getting chainweb-node cuts                                                                 |
-| CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL | number                     |          | 30000          | Interval between getting chainweb-data's latest heights                                                     |
+| NETWORK                              | String                     | Yes      |                | Chainweb network to use. E.g. testnet04/mainnet01                                                           |
+| DATA_HOST                            | String                     | Yes      |                | URL of chainweb-data host to connect to. E.g. http://localhost:7890                                         |
+| CHAINWEB_HOST                        | String                     | Yes      |                | URL of chainweb-node **service** host to connect to. E.g. http://localhost:6600                             |
+| PORT                                 | Number                     |          | 4000           | Port to listen on                                                                                           |
+| REDIS_HOST                           | String                     |          | localhost:6379 | Redis server to use. host:port                                                                              |
+| REDIS_PASSWORD                       | String                     |          |                | Redis password                                                                                              |
+| CONFIRMATION_DEPTH                   | Number                     |          | 6              | Depth at which to consider transactions finalized                                                           |
+| HEARTBEAT_INTERVAL                   | Number                     |          | 25000          | Interval between heartbeat (ping) events                                                                    |
+| EVENTS_STEP_INTERVAL                 | Number                     |          | 10000          | Interval between new data checks against chainweb-data                                                      |
+| CHAINWEB_CUT_UPDATE_INTERVAL         | Number                     |          | 15000          | Interval between getting chainweb-node cuts                                                                 |
+| CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL | Number                     |          | 30000          | Interval between getting chainweb-data's latest heights                                                     |
 | LOG                                  | error/warn/info/log/debug  |          | log            | Console log verbosity level                                                                                 |
-| LOG_TIMESTAMPS                       | boolean                    |          | true           | Prefix console log rows with timestamp                                                                      |
-| LOG_COLORS                           | boolean                    |          | true           | Color usage in console                                                                                      |
+| LOG_TIMESTAMPS                       | Boolean                    |          | true           | Prefix console log rows with timestamp                                                                      |
+| LOG_COLORS                           | Boolean                    |          | true           | Color usage in console                                                                                      |
 | NODE_ENV                             | production/<anything else> |          |                | Environment                                                                                                 |
-| MODULE_HASH_BLACKLIST                | string[]                   |          |                | Modules to ignore while fetching events                                                                     |
-| EVENTS_WHITELIST                     | string[]                   |          | *              | Module/Event allow list for /stream/event endpoint. Recommendation: set this strictly in public deployments |
+| MODULE_HASH_BLACKLIST                | String[]                   |          |                | Modules to ignore while fetching events                                                                     |
+| EVENTS_WHITELIST                     | String[]                   |          | *              | Module/Event allow list for /stream/event endpoint. Recommendation: set this strictly in public deployments |
 
 ## Official Client
 
