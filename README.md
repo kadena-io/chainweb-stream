@@ -92,13 +92,7 @@ data: ""
 
 To stream events module-wide (e.g. coin) or single event (e.g. coin.TRANSFER)
 
-Two endpoints are currently white listed:
-
-`/stream/event/coin`
-
-`/stream/event/marmalade`
-
-You can change this in `src/sse/index.ts`
+This endpoint supports whitelisting specific modules or events to reduce the potential for abuse in public deployments. See `EVENTS_WHITELIST` in [Configuration](#Configuration).
 
 The payload matches the Chainweb-Data [/txs/events](https://github.com/kadena-io/chainweb-api/blob/master/lib/ChainwebData/EventDetail.hs#L11) API response, with the `.meta` addition as documented below. 
 
