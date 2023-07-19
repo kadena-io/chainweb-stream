@@ -118,7 +118,7 @@ export const configSpec: ConfigSpecification[] = [
     varName: 'production',
     envName: 'NODE_ENV',
     callback: (nodeEnv) => isProduction(nodeEnv),
-    typeHint: 'production/<anything else>',
+    typeHint: 'production/<any>',
     description: 'Environment',
   },
   {

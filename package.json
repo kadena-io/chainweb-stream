@@ -28,6 +28,7 @@
     "express-sse": "github:Takadenoshi/express-sse#0.0.4",
     "helmet": "^5.0.2",
     "lodash": "^4.17.21",
+    "markdown-table": "^3.0.3",
     "msw": "^0.39.2",
     "node-fetch": "^3.2.3",
     "npmlog": "^7.0.1",
