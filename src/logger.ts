@@ -21,7 +21,6 @@ if (!logColors) {
 }
 
 const logLevelMappings = {
-  "silly": "silly",
   "verbose": "verbose",
   "debug": "verbose", // for console.debug fallback compatibility
   "log": "info", // nice to have a .log convenience
@@ -56,9 +55,6 @@ export default class Logger {
     if (prefixes.length) {
       this.prefix = prefixes.map(word => `[${word}]`).join(' ');
     }
-  }
-  silly(...args) {
-    npmlog.silly(this.prefix, ...args);
   }
   verbose(...args) {
     npmlog.verbose(this.prefix, ...args);

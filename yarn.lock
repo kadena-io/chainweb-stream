@@ -4451,6 +4451,11 @@
   "resolved" "https://registry.npmjs.org/map-obj/-/map-obj-2.0.0.tgz"
   "version" "2.0.0"
 
+"markdown-table@^3.0.3":
+  "integrity" "sha512-Z1NL3Tb1M9wH4XESsCDEksWoKTdlUafKc4pt0GRwjUyXaCFZ+dc3g2erqB6zm3szA2IUSi7VnPI+o/9jnxh9hw=="
+  "resolved" "https://registry.npmjs.org/markdown-table/-/markdown-table-3.0.3.tgz"
+  "version" "3.0.3"
+
 "media-typer@0.3.0":
   "integrity" "sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ=="
   "resolved" "https://registry.npmjs.org/media-typer/-/media-typer-0.3.0.tgz"
