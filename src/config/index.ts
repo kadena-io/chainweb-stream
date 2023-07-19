@@ -16,127 +16,124 @@ interface ConfigSpecification {
   required?: true;
   defaultValue?: any;
   callback?: (...props: any[]) => any;
+  typeHint?: string;
+  description?: string;
 }
 
-const configSpec: ConfigSpecification[] = [
+export const configSpec: ConfigSpecification[] = [
   {
     varName: 'network',
     envName: 'NETWORK',
     required: true,
+    description: 'Chainweb network to use. E.g. testnet04/mainnet01',
   },
   {
     varName: 'dataHost',
     envName: 'DATA_HOST',
     required: true,
+    description: 'URL of chainweb-data host to connect to. E.g. http://localhost:7890',
   },
   {
     varName: 'chainwebHost',
     envName: 'CHAINWEB_HOST',
     required: true,
+    description: 'URL of chainweb-node **service** host to connect to. E.g. http://localhost:6600'
   },
   {
     varName: 'port',
     envName: 'PORT',
     numeric: true,
     defaultValue: 4000,
+    description: 'Port to listen on',
   },
   {
     varName: 'redisHost',
     envName: 'REDIS_HOST',
     defaultValue: 'localhost:6379',
+    description: 'Redis server to use. host:port',
   },
   {
     varName: 'redisPassword',
     envName: 'REDIS_PASSWORD',
     defaultValue: '',
+    description: 'Redis password',
   },
   {
     varName: 'confirmationDepth',
     envName: 'CONFIRMATION_DEPTH',
     numeric: true,
     defaultValue: 6,
-  },
-  {
-    varName: 'httpRetryBackoffStep',
-    envName: 'HTTP_RETRY_BACKOFF_STEP',
-    numeric: true,
-    defaultValue: 2000,
-  },
-  {
-    varName: 'httpMaxRetries',
-    envName: 'HTTP_MAX_RETRIES',
-    numeric: true,
-    defaultValue: 6,
+    description: 'Depth at which to consider transactions finalized'
   },
   {
     varName: 'heartbeatInterval',
     envName: 'HEARTBEAT_INTERVAL',
     numeric: true,
     defaultValue: 25_000,
+    description: 'Interval between heartbeat (ping) events',
   },
   {
     varName: 'eventsStepInterval',
     envName: 'EVENTS_STEP_INTERVAL',
     numeric: true,
     defaultValue: 10_000,
+    description: 'Interval between new data checks against chainweb-data'
   },
   {
     varName: 'chainwebCutUpdateInterval',
     envName: 'CHAINWEB_CUT_UPDATE_INTERVAL',
     numeric: true,
     defaultValue: 15_000,
+    description: 'Interval between getting chainweb-node cuts'
   },
   {
     varName: 'chainwebDataHeightUpdateInterval',
     envName: 'CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL',
     numeric: true,
     defaultValue: 30_000,
+    description: "Interval between getting chainweb-data's latest heights"
   },
   {
     varName: 'log',
     envName: 'LOG',
     defaultValue: 'log',
+    typeHint: 'error/warn/info/log/debug',
+    description: 'Console log verbosity level'
   },
   {
     varName: 'logTimestamps',
     envName: 'LOG_TIMESTAMPS',
     boolean: true,
     defaultValue: true,
+    description: 'Prefix console log rows with timestamp'
   },
   {
     varName: 'logColors',
     envName: 'LOG_COLORS',
     boolean: true,
     defaultValue: true,
+    description: 'Color usage in console'
   },
   {
     varName: 'production',
     envName: 'NODE_ENV',
     callback: (nodeEnv) => isProduction(nodeEnv),
+    typeHint: 'production/<anything else>',
+    description: 'Environment',
   },
   {
     varName: 'moduleHashBlacklist',
     envName: 'MODULE_HASH_BLACKLIST',
     isArray: true,
-    defaultValue: [
-      'LKQj2snGFz7Y8iyYlSm3uIomEAYb0C9zXCkTIPtzkPU',
-      'F7tD1QlT8dx8BGyyq-h22OECYS7C3FfcYaRyxt6D1YQ',
-      'WSIFGtnAlLCHFcFEHaKGrGeAG4qnTsZRj9BdvzzGa6w',
-      '4m9KUKUzbd9hVZoN9uIlJkxYaf1NTz9G7Pc9C9rKTo4',
-      '_1rbpI8gnHqflwb-XqHsYEFBCrLNncLplikh9XFG-y8',
-      'dhIGiZIWED2Rk6zIrJxG8DeQn8n7WDKg2b5cZD2w4CU',
-      'cOJgr8s3j3p5Vk0AAqjdf1TzvWZlFsAiq4pMiOzUo1w',
-      'HsePyFCyYUPEPJqG5VymbQkkI3gsPAQn218uWEF_dbs',
-      'lWqEvH5U20apKfBn27HOBaW46vQlxhkiDtYHZ5KoYp0',
-      'uvtUnp96w2KnxnneYa4kUN1kTvYSa8Ma33UDkQXV0NA',
-      '78ngDzxXE8ZyHE-kFm2h7-6Xm8N8uwU_xd1fasO8gWU',
-    ],
+    defaultValue: [],
+    description: 'Modules to ignore while fetching events'
   },
   {
     varName: 'eventsWhitelist',
     envName: 'EVENTS_WHITELIST',
     isArray: true,
     defaultValue: ['*'],
+    description: 'Module/Event allow list for /stream/event endpoint. Recommendation: set this strictly in public deployments',
   },
 ]
 

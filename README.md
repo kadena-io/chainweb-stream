@@ -10,33 +10,59 @@ The payloads match the Chainweb-Data API response for [/txs/events](https://gith
 
 Alpha version / unstable.
 
+## Requirements
+
+- node.js: **Recommended v18**. v20 should also work but is not tested extensively.
+- npm or yarn
+- redis
+
 ## Setup
 
-**Recommended node version: v18 (LTS)**. v20 should also work but is not tested extensively.
+Before you run chainweb-stream, you need to configure it via environment variables or a dotenv file.
 
-Chainweb-stream-server currently requires a local redis client to cache results.
+To use a dotenv file, copy the `.default.env` file into `.env` and set at least the `NETWORK`, `DATA_HOST` and `CHAINWEB_HOST` values.
 
-Configuration via environment variables or dotenv file is required. Copy the `.default.env` file into `.env` and set at least the `NETWORK`, `DATA_HOST` and `CHAINWEB_HOST` values.
+See [Configuration](#Configuration) for a full list of supported options.
 
-`CHAINWEB_HOST` should point to a chainweb-node *service* host.
-
-`DATA_HOST` should point to a chainweb-data host.
-
-`EVENTS_WHITELIST` defaults to `*` (allow all). You can use this configuration value to limit which modules/events your server should support. Modules or events are expected verbatim, so `coin` will not also support `coin.TRANSFER`, both need to be explicitly provided if you want to query by both.
-
-```
+```bash
 npm i # or yarn
 cp .default.env .env
-# EDIT .env with the appropriate values
+vi .env # EDIT .env with the appropriate values
 ```
 
 ## Run
 
-```
+```bash
 npm run start # or yarn start
 ```
 
+Chainweb-stream listens on port 4000 by default.
+
 Note: It currently waits for a request before syncing events from chainweb-data.
+
+## Configuration
+
+The following configuration flags can be passed in as environment variables or placed in `/.env`.
+
+| Variable Name                        | Type                       | Required | Default Value  | Description                                                                                                 |
+| ------------------------------------ | -------------------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
+| NETWORK                              | string                     | yes      |                | Chainweb network to use. E.g. testnet04/mainnet01                                                           |
+| DATA_HOST                            | string                     | yes      |                | URL of chainweb-data host to connect to. E.g. http://localhost:7890                                         |
+| CHAINWEB_HOST                        | string                     | yes      |                | URL of chainweb-node **service** host to connect to. E.g. http://localhost:6600                             |
+| PORT                                 | number                     |          | 4000           | Port to listen on                                                                                           |
+| REDIS_HOST                           | string                     |          | localhost:6379 | Redis server to use. host:port                                                                              |
+| REDIS_PASSWORD                       | string                     |          |                | Redis password                                                                                              |
+| CONFIRMATION_DEPTH                   | number                     |          | 6              | Depth at which to consider transactions finalized                                                           |
+| HEARTBEAT_INTERVAL                   | number                     |          | 25000          | Interval between heartbeat (ping) events                                                                    |
+| EVENTS_STEP_INTERVAL                 | number                     |          | 10000          | Interval between new data checks against chainweb-data                                                      |
+| CHAINWEB_CUT_UPDATE_INTERVAL         | number                     |          | 15000          | Interval between getting chainweb-node cuts                                                                 |
+| CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL | number                     |          | 30000          | Interval between getting chainweb-data's latest heights                                                     |
+| LOG                                  | error/warn/info/log/debug  |          | log            | Console log verbosity level                                                                                 |
+| LOG_TIMESTAMPS                       | boolean                    |          | true           | Prefix console log rows with timestamp                                                                      |
+| LOG_COLORS                           | boolean                    |          | true           | Color usage in console                                                                                      |
+| NODE_ENV                             | production/<anything else> |          |                | Environment                                                                                                 |
+| MODULE_HASH_BLACKLIST                | string[]                   |          |                | Modules to ignore while fetching events                                                                     |
+| EVENTS_WHITELIST                     | string[]                   |          | *              | Module/Event allow list for /stream/event endpoint. Recommendation: set this strictly in public deployments |
 
 ## Official Client
 
@@ -50,7 +76,7 @@ You can experiment with the server APIs using curl:
 # curl -s  'http://localhost:4000/stream/event/coin?limit=2'
 id: 0
 event: initial
-data: [{"blockTime":"2023-03-01T12:23:25.564693Z","height":3508106,"blockHash":"O6kzghnwCe0BowtcymSRX8URP2kC_6zeRKb6OUdu3vE","requestKey":"<coinbase>","params":["","99cb7008d7d70c94f138cc366a825f0d9c83a8a2f4ba82c86c666e0ab6fecf3a",1.0265475],"name":"coin.TRANSFER","idx":0,"chain":9,"moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","meta":{"id":"2db40fabb613fe9e970af8b71d594f0e","confirmations":1}},{"blockTime":"2023-03-01T12:24:01.520663Z","height":3508106,"blockHash":"YZZgxM9SGjfh_-WKdsffeg1dI8j6APHB8aDM8aqnGyk","requestKey":"<coinbase>","params":["","k:e7f7130f359fb1f8c87873bf858a0e9cbc3c1059f62ae715ec72e760b055e9f3",1.0265475],"name":"coin.TRANSFER","idx":0,"chain":1,"moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","meta":{"id":"b02626c21b7dffe8a41ec5bccfd5d2f6","confirmations":0}}]
+data: {"config":{"network":"mainnet01","type":"event","id":"coin","maxConf":6,"heartbeat":25000,"v":"0.0.3"},"data":[{"height":3911167,"name":"coin.TRANSFER","params":["99cb7008d7d70c94f138cc366a825f0d9c83a8a2f4ba82c86c666e0ab6fecf3a","k:e7f7130f359fb1f8c87873bf858a0e9cbc3c1059f62ae715ec72e760b055e9f3",0.0000146],"blockTime":"2023-07-19T12:23:14.777353Z","requestKey":"zl-E_kle_EZzUYJpWHaNZgKyUPUfEs48alIYOek_RF8","blockHash":"QBQy3Aj3ZBYShtVEFOkOEbIDDUda2MfWWZIjb9MkVBc","moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","idx":0,"chain":0,"meta":{"id":"0790270ba1f706c2d0daa62c2787bbd9","confirmations":0}},{"height":3911167,"name":"coin.TRANSFER","params":["99cb7008d7d70c94f138cc366a825f0d9c83a8a2f4ba82c86c666e0ab6fecf3a","b7df00dc4f1bb05da803d5efbb5336a8de29b015b97cad5df5a99c083e0088ae",{"decimal":"1.007810000000000000000000000000"}],"blockTime":"2023-07-19T12:23:14.777353Z","requestKey":"zl-E_kle_EZzUYJpWHaNZgKyUPUfEs48alIYOek_RF8","blockHash":"QBQy3Aj3ZBYShtVEFOkOEbIDDUda2MfWWZIjb9MkVBc","moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","idx":1,"chain":0,"meta":{"id":"8b4c748babe3dad77269e9532927d25d","confirmations":0}}]}
 
 id: 1
 data: {"blockTime":"2023-03-01T12:23:55.929138Z","height":3508106,"blockHash":"qVppqo9ZadSM0RRI5IwDOJPkpWdDq0uH5SFHfItZ-5M","requestKey":"<coinbase>","params":["","k:e7f7130f359fb1f8c87873bf858a0e9cbc3c1059f62ae715ec72e760b055e9f3",1.0265475],"name":"coin.TRANSFER","idx":0,"chain":18,"moduleHash":"rE7DU8jlQL9x_MPYuniZJf5ICBTAEHAIFQCB4blofP4","meta":{"id":"7632170d70ede166c783ffaa3e66f935","confirmations":6}}
