@@ -1,6 +1,6 @@
 {
   "name": "@kadena/chainweb-stream",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "src/server.js",
   "type": "module",
   "private": false,

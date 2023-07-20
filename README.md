@@ -57,6 +57,8 @@ The following configuration flags can be passed in as environment variables or p
 | EVENTS_STEP_INTERVAL                 | Number                    |          | 10000          | Interval between new data checks against chainweb-data                                                      |
 | CHAINWEB_CUT_UPDATE_INTERVAL         | Number                    |          | 15000          | Interval between getting chainweb-node cuts                                                                 |
 | CHAINWEB_DATA_HEIGHT_UPDATE_INTERVAL | Number                    |          | 30000          | Interval between getting chainweb-data's latest heights                                                     |
+| HTTP_RETRY_BACKOFF_STEP              | Number                    |          | 2000           | Step to use when backing off from a failed HTTP request. Backoff formula: backoff_step * (retries ^ 2)      |
+| HTTP_MAX_RETRIES                     | Number                    |          | 6              | Maximum number of HTTP request retries to attempt                                                           |
 | LOG                                  | error/warn/info/log/debug |          | log            | Console log verbosity level                                                                                 |
 | LOG_TIMESTAMPS                       | Boolean                   |          | true           | Prefix console log rows with timestamp                                                                      |
 | LOG_COLORS                           | Boolean                   |          | true           | Color usage in console                                                                                      |
