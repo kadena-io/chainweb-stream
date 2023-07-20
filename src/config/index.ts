@@ -94,6 +94,20 @@ export const configSpec: ConfigSpecification[] = [
     description: "Interval between getting chainweb-data's latest heights"
   },
   {
+    varName: 'httpRetryBackoffStep',
+    envName: 'HTTP_RETRY_BACKOFF_STEP',
+    numeric: true,
+    defaultValue: 2000,
+    description: "Step to use when backing off from a failed HTTP request. Backoff formula: backoff_step * (retries ^ 2)",
+  },
+  {
+    varName: 'httpMaxRetries',
+    envName: 'HTTP_MAX_RETRIES',
+    numeric: true,
+    defaultValue: 6,
+    description: "Maximum number of HTTP request retries to attempt",
+   },
+  {
     varName: 'log',
     envName: 'LOG',
     defaultValue: 'log',
