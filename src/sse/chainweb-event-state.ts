@@ -9,24 +9,33 @@ import {
 import { TransactionType, GenericData } from './types.js';
 import Logger from '../logger.js';
 
+type DataFilterPredicate = (data: GenericData) => boolean;
+
 interface GetEventOptions {
   minHeight?: number;
   maxHeight?: number;
   limit?: number;
 }
 
-function heightSorter(a, b) {
+interface PresentEventOptions extends GetEventOptions {
+  sort?: boolean
+}
+
+function heightSorter(a: GenericData, b: GenericData) {
   // sort high to low heights
   return a.height < b.height ? 1 : -1;
 }
 
-function presentEvents(sources, options) {
+function presentEvents(sources: GenericData[][], options: PresentEventOptions): GenericData[] {
   const { minHeight, maxHeight, limit } = options;
-  const filterPredicates = [];
-  if (minHeight) {
+  if (limit === 0) { // early return
+    return [];
+  }
+  const filterPredicates: DataFilterPredicate[] = [];
+  if (minHeight !== undefined) {
     filterPredicates.push(event => event.height >= minHeight);
   }
-  if (maxHeight) {
+  if (maxHeight !== undefined) {
     filterPredicates.push(event => event.height <= maxHeight);
   }
 
@@ -42,7 +51,7 @@ function presentEvents(sources, options) {
   if (options.sort) {
     output.sort(heightSorter);
   }
-  return options.limit ? output.slice(0, limit) : output;
+  return options.limit !== undefined ? output.slice(0, limit) : output;
 }
 
 export default class ChainwebEventServiceState {
@@ -60,7 +69,7 @@ export default class ChainwebEventServiceState {
     this.logger = logger;
   }
 
-  async load() {
+  async load(): Promise<void> {
     const [
       unconfirmed,
       confirmed,
@@ -75,7 +84,7 @@ export default class ChainwebEventServiceState {
     this.orphaned = orphaned ?? [];
   }
 
-  async save() {
+  async save(): Promise<void> {
     await Promise.all([
       setRedisConfirmedEvents(this._type, this._filter, this.confirmed),
       setRedisUnconfirmedEvents(this._type, this._filter, this.unconfirmed),
@@ -83,25 +92,25 @@ export default class ChainwebEventServiceState {
     ]);
   }
 
-  get summary() {
+  get summary(): string {
     return `confirmed=${this.confirmed.length} unconfirmed=${this.unconfirmed.length} orphaned=${this.orphaned.length}`;
   }
 
-  getAllEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}) {
+  getAllEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}): GenericData[] {
     return presentEvents(
       [this.unconfirmed, this.confirmed, this.orphaned],
       { minHeight, maxHeight, limit, sort: true },
     );
   }
 
-  getConfirmedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}) {
+  getConfirmedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}): GenericData[] {
     return presentEvents(
       [this.confirmed],
       { minHeight, maxHeight, limit, sort: false },
     );
   }
 
-  getOrphanedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}) {
+  getOrphanedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}): GenericData[] {
     return presentEvents(
       [this.orphaned],
       { minHeight, maxHeight, limit, sort: false },
@@ -109,7 +118,7 @@ export default class ChainwebEventServiceState {
   }
 
   /* add deduped and sorted */
-  add(permanence, event) {
+  add(permanence, event): boolean {
     const { height } = event;
     for(let idx = 0; idx < this[permanence].length; idx++) {
       const existing = this[permanence][idx];
@@ -131,7 +140,7 @@ export default class ChainwebEventServiceState {
     return true;
   }
 
-  remove(permanence, event) {
+  remove(permanence, event): boolean {
     const idx = this.unconfirmed.indexOf(event);
     if (idx === -1) {
       this.logger.warn(`Could not find event ${event.name} ${event.requestKey} from ${permanence} while trying to remove it from ${permanence}`);
@@ -141,12 +150,7 @@ export default class ChainwebEventServiceState {
     return true;
   }
 
-  _eventExists(needle, collection, startIdx=0) {
-    if (!collection || !Array.isArray(collection)) {
-      return this._eventExists(needle, this.unconfirmed) ||
-        this._eventExists(needle, this.confirmed) ||
-        this._eventExists(needle, this.orphaned);
-    }
+  _eventExists(needle: GenericData, collection: GenericData[], startIdx=0): boolean {
     const { height, requestKey, blockHash, meta: { id } } = needle;
     for(let idx = startIdx; idx < collection.length; idx++) {
       const event = collection[idx];
