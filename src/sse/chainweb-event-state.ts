@@ -12,22 +12,22 @@ import { GenericData, TransactionType } from './types.js';
 
 type DataFilterPredicate = (data: GenericData) => boolean;
 
-interface GetEventOptions {
+interface IGetEventOptions {
   minHeight?: number;
   maxHeight?: number;
   limit?: number;
 }
 
-interface PresentEventOptions extends GetEventOptions {
+interface IPresentEventOptions extends IGetEventOptions {
   sort?: boolean;
 }
 
-function heightSorter(a: GenericData, b: GenericData) {
+function heightSorter(a: GenericData, b: GenericData): 1 | -1 {
   // sort high to low heights
   return a.height < b.height ? 1 : -1;
 }
 
-function presentEvents(sources: GenericData[][], options: PresentEventOptions): GenericData[] {
+function presentEvents(sources: GenericData[][], options: IPresentEventOptions): GenericData[] {
   const { minHeight, maxHeight, limit } = options;
   if (limit === 0) {
     // early return
@@ -57,21 +57,21 @@ function presentEvents(sources: GenericData[][], options: PresentEventOptions): 
 }
 
 export default class ChainwebEventServiceState {
-  _type: TransactionType;
-  _filter: string;
-  logger: Logger;
+  private _type: TransactionType;
+  private _filter: string;
+  private _logger: Logger;
 
-  unconfirmed: GenericData[] = [];
-  confirmed: GenericData[] = [];
-  orphaned: GenericData[] = [];
+  public unconfirmed: GenericData[] = [];
+  public confirmed: GenericData[] = [];
+  public orphaned: GenericData[] = [];
 
-  constructor({ type, filter, logger }) {
+  public constructor({ type, filter, logger }) {
     this._type = type;
     this._filter = filter;
-    this.logger = logger;
+    this._logger = logger;
   }
 
-  async load(): Promise<void> {
+  public async load(): Promise<void> {
     const [unconfirmed, confirmed, orphaned] = await Promise.all([
       getRedisUnconfirmedEvents(this._type, this._filter),
       getRedisConfirmedEvents(this._type, this._filter),
@@ -82,7 +82,7 @@ export default class ChainwebEventServiceState {
     this.orphaned = orphaned ?? [];
   }
 
-  async save(): Promise<void> {
+  public async save(): Promise<void> {
     await Promise.all([
       setRedisConfirmedEvents(this._type, this._filter, this.confirmed),
       setRedisUnconfirmedEvents(this._type, this._filter, this.unconfirmed),
@@ -90,11 +90,11 @@ export default class ChainwebEventServiceState {
     ]);
   }
 
-  get summary(): string {
+  public get summary(): string {
     return `confirmed=${this.confirmed.length} unconfirmed=${this.unconfirmed.length} orphaned=${this.orphaned.length}`;
   }
 
-  getAllEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}): GenericData[] {
+  public getAllEvents({ minHeight, maxHeight, limit }: IGetEventOptions = {}): GenericData[] {
     return presentEvents([this.unconfirmed, this.confirmed, this.orphaned], {
       minHeight,
       maxHeight,
@@ -103,16 +103,16 @@ export default class ChainwebEventServiceState {
     });
   }
 
-  getConfirmedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}): GenericData[] {
+  public getConfirmedEvents({ minHeight, maxHeight, limit }: IGetEventOptions = {}): GenericData[] {
     return presentEvents([this.confirmed], { minHeight, maxHeight, limit, sort: false });
   }
 
-  getOrphanedEvents({ minHeight, maxHeight, limit }: GetEventOptions = {}): GenericData[] {
+  public getOrphanedEvents({ minHeight, maxHeight, limit }: IGetEventOptions = {}): GenericData[] {
     return presentEvents([this.orphaned], { minHeight, maxHeight, limit, sort: false });
   }
 
   /* add deduped and sorted */
-  add(permanence, event): boolean {
+  public add(permanence, event): boolean {
     const { height } = event;
     for (let idx = 0; idx < this[permanence].length; idx++) {
       const existing = this[permanence][idx];
@@ -134,10 +134,10 @@ export default class ChainwebEventServiceState {
     return true;
   }
 
-  remove(permanence, event): boolean {
+  public remove(permanence, event): boolean {
     const idx = this.unconfirmed.indexOf(event);
     if (idx === -1) {
-      this.logger.warn(
+      this._logger.warn(
         `Could not find event ${event.name} ${event.requestKey} from ${permanence} while trying to remove it from ${permanence}`,
       );
       return false;
@@ -146,7 +146,7 @@ export default class ChainwebEventServiceState {
     return true;
   }
 
-  _eventExists(needle: GenericData, collection: GenericData[], startIdx = 0): boolean {
+  private _eventExists(needle: GenericData, collection: GenericData[], startIdx = 0): boolean {
     const {
       height,
       requestKey,
